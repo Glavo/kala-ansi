@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
@@ -12,7 +13,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
-public final class AnsiString {
+public final class AnsiString implements Serializable {
+    private static final long serialVersionUID = -2640452895881997219L;
+
     static final Pattern ANSI_PATTERN = Pattern.compile("(\u009b|\u001b\\[)[0-?]*[ -/]*[@-~]");
     static final String RESET = "\u001b[0m";
     static final AnsiString EMPTY = new AnsiString("", null, 0);
@@ -26,6 +29,161 @@ public final class AnsiString {
         this.plain = plain;
         this.states = states;
         this.statesFrom = statesFrom;
+    }
+
+    public static int trimStatesInit(long[] states) {
+        if (states == null) {
+            return 0;
+        }
+
+        final int statesLength = states.length;
+
+        for (int i = 0; i < statesLength; i++) {
+            if (states[i] != 0L) {
+                return i;
+            }
+        }
+        return statesLength;
+    }
+
+    public static int trimStatesTail(long[] states, int limit) {
+        if (states == null) {
+            return 0;
+        }
+        for (int i = states.length - 1; i >= limit; i--) {
+            if (states[i] != 0L) {
+                return i + 1 - limit;
+            }
+        }
+        return 0;
+    }
+
+    @NotNull
+    public static AnsiString of(CharSequence raw) {
+        return of(raw, ErrorMode.DEFAULT);
+    }
+
+    @NotNull
+    public static AnsiString of(CharSequence raw, ErrorMode errorMode) {
+        if (raw == null) {
+            return NULL;
+        }
+
+        final int rawLength = raw.length();
+        if (rawLength == 0) {
+            return EMPTY;
+        }
+
+        StringBuilder builder = new StringBuilder(rawLength);
+        long[] states = new long[rawLength];
+
+        long currentColor = 0L;
+        int sourceIndex = 0;
+        int destIndex = 0;
+        boolean hasStates = false;
+
+        while (sourceIndex < rawLength) {
+            final char ch = raw.charAt(sourceIndex);
+            if (ch == '\u001b' || ch == '\u009b') {
+                hasStates = true;
+                final int escapeStartSourceIndex = sourceIndex;
+                Trie.ValueWithLength tuple = Trie.parseMap().query(raw, escapeStartSourceIndex);
+                if (tuple == null) {
+                    sourceIndex = errorMode.handle(sourceIndex, raw);
+                } else {
+                    final int newIndex = tuple.length;
+                    final Object v = tuple.value;
+                    if (v instanceof Attribute) {
+                        currentColor = ((Attribute) v).transform(currentColor);
+                        sourceIndex += newIndex;
+                    } else {
+                        sourceIndex += newIndex;
+                        ColorCategory category = ((ColorCategory) v);
+                        if (sourceIndex >= raw.length() || raw.charAt(sourceIndex) < '0' || raw.charAt(sourceIndex) > '9') {
+                            sourceIndex = errorMode.handle(escapeStartSourceIndex, raw);
+                        } else {
+                            int r = 0;
+                            int count = 0;
+                            while (sourceIndex < raw.length()
+                                    && raw.charAt(sourceIndex) >= '0'
+                                    && raw.charAt(sourceIndex) <= '9'
+                                    && count < 3) {
+                                r = r * 10 + (raw.charAt(sourceIndex) - '0');
+                                sourceIndex += 1;
+                                count += 1;
+                            }
+
+                            if (!(sourceIndex < raw.length() && raw.charAt(sourceIndex) == ';')
+                                    || !(sourceIndex + 1 < raw.length()
+                                    && raw.charAt(sourceIndex + 1) >= '0'
+                                    && raw.charAt(sourceIndex + 1) <= '9')) {
+                                sourceIndex = errorMode.handle(escapeStartSourceIndex, raw);
+                            } else {
+                                ++sourceIndex;
+                                int g = 0;
+                                count = 0;
+                                while (sourceIndex < raw.length()
+                                        && raw.charAt(sourceIndex) >= '0'
+                                        && raw.charAt(sourceIndex) <= '9'
+                                        && count < 3) {
+                                    g = g * 10 + (raw.charAt(sourceIndex) - '0');
+                                    ++sourceIndex;
+                                    ++count;
+                                }
+
+                                if (!(sourceIndex < raw.length() && raw.charAt(sourceIndex) == ';')
+                                        || !(sourceIndex + 1 < raw.length()
+                                        && raw.charAt(sourceIndex + 1) >= '0'
+                                        && raw.charAt(sourceIndex + 1) <= '9')) {
+                                    sourceIndex = errorMode.handle(escapeStartSourceIndex, raw);
+                                } else {
+                                    ++sourceIndex;
+                                    int b = 0;
+                                    count = 0;
+                                    while (sourceIndex < raw.length()
+                                            && raw.charAt(sourceIndex) >= '0'
+                                            && raw.charAt(sourceIndex) <= '9'
+                                            && count < 3) {
+                                        b = b * 10 + (raw.charAt(sourceIndex) - '0');
+                                        ++sourceIndex;
+                                        ++count;
+                                    }
+                                    if (!(sourceIndex < raw.length() && raw.charAt(sourceIndex) == 'm')) {
+                                        sourceIndex = errorMode.handle(escapeStartSourceIndex, raw);
+                                    } else {
+                                        ++sourceIndex;
+                                        if (!(0 <= r && r < 256 && 0 <= g && g < 256 && 0 <= b && b < 256)) {
+                                            sourceIndex = errorMode.handle(escapeStartSourceIndex, raw);
+                                        } else {
+                                            currentColor =
+                                                    (currentColor & ~category.mask()) |
+                                                            ((273 + category.trueIndex(r, g, b)) << category.offset);
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+            } else {
+                states[destIndex] = currentColor;
+                builder.append(ch);
+                ++sourceIndex;
+                ++destIndex;
+            }
+        }
+
+        if (hasStates) {
+            final int statesFrom = trimStatesInit(states);
+            final int statesLength = trimStatesTail(states, statesFrom);
+            if (statesLength != 0) {
+                long[] ss = Arrays.copyOfRange(states, statesFrom, statesFrom + statesLength);
+                return new AnsiString(builder.toString(), ss, statesFrom);
+            }
+        }
+        return new AnsiString(raw instanceof String ? raw : builder.toString(), null, 0);
     }
 
     @NotNull
@@ -259,7 +417,7 @@ public final class AnsiString {
         return new AnsiString(plain, newStates, newStatesFrom);
     }
 
-    private transient Object encodedCache = null; // TODO
+    private transient Object encodedCache = null;
 
     private String getCache() {
         final Object cache = this.encodedCache;
@@ -351,6 +509,8 @@ public final class AnsiString {
                 return matcher.end();
             }
         };
+
+        public static final ErrorMode DEFAULT = THROW;
 
         public abstract int handle(int sourceIndex, CharSequence raw);
     }
@@ -501,7 +661,7 @@ public final class AnsiString {
         private Color() {
         }
 
-        static final Category category = new ColorCategory("Color", 3, 25, 38);
+        static final ColorCategory category = new ColorCategory("Color", 3, 25, 38);
 
         public static final Attribute Reset =
                 category.makeAttr("Reset", "\u001b[39m", 0);
@@ -538,13 +698,17 @@ public final class AnsiString {
         public static final Attribute White =
                 category.makeAttr("White", "\u001b[97m", 16);
 
+
+        public static Attribute True(int r, int g, int b) {
+            return category.True(r, g, b);
+        }
     }
 
     public static final class Back {
         private Back() {
         }
 
-        static final Category category = new ColorCategory("Back", 28, 25, 48);
+        static final ColorCategory category = new ColorCategory("Back", 28, 25, 48);
 
         public static final Attribute Reset =
                 category.makeAttr("Reset", "\u001b[49m", 0);
@@ -581,5 +745,8 @@ public final class AnsiString {
         public static final Attribute White =
                 category.makeAttr("White", "\u001b[107m", 16);
 
+        public static Attribute True(int r, int g, int b) {
+            return category.True(r, g, b);
+        }
     }
 }
