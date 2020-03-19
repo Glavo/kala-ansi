@@ -1,0 +1,9 @@
+apply plugin: 'kotlin'
+
+dependencies {
+    api group: group, name: 'kala-ansi', version: version
+
+    compileOnly group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlinVersion
+}
+
+compileKotlin.dependsOn(':kala-ansi:publishToMavenLocal')

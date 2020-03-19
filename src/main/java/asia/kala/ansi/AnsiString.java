@@ -980,10 +980,53 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
+    //region Kotlin operators
+
+    public final AnsiString plus(Object string) {
+        return concat(AnsiString.valueOf(string));
+    }
+
+    /**
+     * Alias of {@link #concat(CharSequence)}, used to overload the plus operator in kotlin.
+     */
+    public final AnsiString plus(CharSequence string) {
+        return concat(AnsiString.valueOf(string));
+    }
+
+    /**
+     * Alias of {@link #concat(AnsiString)}, used to overload the plus operator in kotlin.
+     */
+    public final AnsiString plus(AnsiString other) {
+        return concat(other);
+    }
+
+    //endregion
+
+    //region Scala operators
+
+    public final AnsiString $plus$plus(Object string) {
+        return concat(AnsiString.valueOf(string));
+    }
+
+    /**
+     * Alias of {@link #concat(CharSequence)}, used to overload the `++` operator in kotlin.
+     */
+    public final AnsiString $plus$plus(CharSequence string) {
+        return concat(AnsiString.valueOf(string));
+    }
+
+    /**
+     * Alias of {@link #concat(AnsiString)}, used to overload the `++` operator in scala.
+     */
+    public final AnsiString $plus$plus(AnsiString other) {
+        return concat(other);
+    }
+
+    //endregion
+
     /**
      * {@inheritDoc}
      */
-    @Override
     public final int compareTo(AnsiString o) {
         return toString().compareTo(o.toString());
     }
@@ -1165,6 +1208,34 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
 
         /**
+         * Alias of {@link #overlay(CharSequence)}, used to overload the invoke operator in scala.
+         */
+        public final AnsiString apply(CharSequence string) {
+            return overlay(string);
+        }
+
+        /**
+         * Alias of {@link #overlay(AnsiString)}, used to overload the invoke operator in scala.
+         */
+        public final AnsiString apply(AnsiString string) {
+            return overlay(string);
+        }
+
+        /**
+         * Alias of {@link #overlay(CharSequence)}, used to overload the invoke operator in kotlin.
+         */
+        public final AnsiString invoke(CharSequence string) {
+            return overlay(string);
+        }
+
+        /**
+         * Alias of {@link #overlay(AnsiString)}, used to overload the invoke operator in kotlin.
+         */
+        public final AnsiString invoke(AnsiString string) {
+            return overlay(string);
+        }
+
+        /**
          * Apply this to the given {@code CharSequence}, making it take effect
          * across the entire length of that string.
          */
@@ -1295,18 +1366,16 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
         public static Attribute of(List<? extends Attribute> list) {
             final ListIterator<? extends Attribute> it = list.listIterator(list.size());
+            //noinspection Convert2Diamond
             return of(new Iterator<Attribute>() {
-                @Override
                 public final boolean hasNext() {
                     return it.hasPrevious();
                 }
 
-                @Override
                 public final Attribute next() {
                     return it.previous();
                 }
 
-                @Override
                 public final void remove() {
                     throw new UnsupportedOperationException("remove");
                 }
@@ -1391,7 +1460,6 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             return new AttributeWithRange(this, start, end);
         }
 
-        @Override
         public final int compareTo(AnsiString.Attribute o) {
             final long x = this.applyMask;
             final long y = o.applyMask;

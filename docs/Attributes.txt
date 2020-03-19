@@ -1,0 +1,9 @@
+AnsiString.Color.Red // You can work with individual attributes
+AnsiString.Underlined.On
+var combined = AnsiString.Color.Red.concat(AnsiString.Underlined.On) // Or you can combine them using `.concat`
+// You can overlay the combined `Attribute` to a string or range just link an individual `Attribute`
+combined.overlay("Hello World Ansi!")
+AnsiString.valueOf("Hello World Ansi!").overlay(combined, 6, 11)
+// attributes apply from left-to-right
+var override = AnsiString.Color.Red.concat(AnsiString.Bold.On).concat(AnsiString.Color.Blue)
+AnsiString.valueOf("Hello World Ansi!").overlay(override, 6, 11) // e.g. in this case, Blue Overrides Red

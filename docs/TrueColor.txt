@@ -1,0 +1,8 @@
+void showTrueBlock(IntFunction<AnsiString> mapper) {
+    var values = IntStream.rangeClosed(0, 255).mapToObj(mapper).toArray(AnsiString[]::new);
+    for(var line : JavaArray.grouped(values, 32)) {
+        Terminal.println(JavaArray.joinToString(line, ""));
+    }
+}
+showTrueBlock(i -> AnsiString.Color.True(i, i, i).overlay("#"))
+showTrueBlock(i -> AnsiString.Back.True(i, 255 - i, 255).overlay(" "))

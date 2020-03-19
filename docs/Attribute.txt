@@ -1,0 +1,8 @@
+var colored = AnsiString.Color.LightBlue.overlay("Hello World Ansi!") // You can use any terminal colors
+AnsiString.Underlined.On.overlay("Hello World Ansi!") // Or decorations
+AnsiString.Reversed.On.overlay("Hello World Ansi!")
+colored.overlay(AnsiString.Underlined.On, 0, 5) // .overlay can apply these effects to substrings
+colored.overlay(AnsiString.Color.LightRed, 6, 11)
+var colorReversed = colored.overlay(AnsiString.Reversed.On, 12, 16)
+colorReversed.overlay(AnsiString.Color.Reset, 12, 16) // you can reset properties, e.g. color
+colorReversed.overlay(AnsiString.Reset, 12, 16) // Or you can reset everything

@@ -1,0 +1,6 @@
+var colored = AnsiString.Color.Red.overlay("Hello World Ansi!")
+AnsiString.valueOf("Hello World Ansi!").overlay(AnsiString.Color.Red)
+var length = colored.length() // Fast and returns the non-colored length of string
+var coloredBlueWorld = colored.overlay(AnsiString.Color.Blue, 6, 11)
+var underlineWorld = colored.overlay(AnsiString.Underlined.On, 6, 11)
+var underlineBlue = coloredBlueWorld.overlay(AnsiString.Underlined.On, 6, 11)
