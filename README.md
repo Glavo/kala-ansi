@@ -1,4 +1,5 @@
 ## Kala Ansi
+[![Build Status](https://travis-ci.com/kala-projects/kala-ansi.svg?branch=master)](https://travis-ci.com/kala-projects/kala-ansi)
 
 Kala Ansi is a lightweight java library make it very easy to use ANSI decorative strings.
 
