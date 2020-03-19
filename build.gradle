@@ -16,7 +16,7 @@ allprojects {
     apply plugin: 'com.jfrog.bintray'
 
     group 'asia.kala'
-    version '0.1.0-SHAPSHOT'
+    version '0.1.0-RC1'
 
     modularity.mixedJavaRelease 8
 
