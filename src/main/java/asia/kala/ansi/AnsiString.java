@@ -1,19 +1,14 @@
 package asia.kala.ansi;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Range;
-
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.UncheckedIOException;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
-public final class AnsiString implements Serializable {
+public final class AnsiString implements Serializable, Comparable<AnsiString> {
     private static final long serialVersionUID = -2640452895881997219L;
 
     static final Pattern ANSI_PATTERN = Pattern.compile("(\u009b|\u001b\\[)[0-?]*[ -/]*[@-~]");
@@ -21,14 +16,18 @@ public final class AnsiString implements Serializable {
     static final AnsiString EMPTY = new AnsiString("", null, 0);
     static final AnsiString NULL = new AnsiString("null", null, 0);
 
-    private final CharSequence plain;
+    private final String plain;
     private final long[] states;
     private final int statesFrom;
 
-    AnsiString(CharSequence plain, long[] states, int statesFrom) {
+    AnsiString(String plain, long[] states, int statesFrom) {
         this.plain = plain;
         this.states = states;
         this.statesFrom = statesFrom;
+
+        if (states == null) {
+            encodedCache = plain;
+        }
     }
 
     public static int trimStatesInit(long[] states) {
@@ -50,7 +49,14 @@ public final class AnsiString implements Serializable {
         if (states == null) {
             return 0;
         }
-        for (int i = states.length - 1; i >= limit; i--) {
+        return trimStatesTail(states, limit, states.length);
+    }
+
+    public static int trimStatesTail(long[] states, int limit, int arrayLength) {
+        if (states == null) {
+            return 0;
+        }
+        for (int i = arrayLength - 1; i >= limit; i--) {
             if (states[i] != 0L) {
                 return i + 1 - limit;
             }
@@ -58,15 +64,49 @@ public final class AnsiString implements Serializable {
         return 0;
     }
 
-    @NotNull
-    public static AnsiString of(CharSequence raw) {
-        return of(raw, ErrorMode.DEFAULT);
+    public static AnsiString valueOf() {
+        return EMPTY;
     }
 
-    @NotNull
-    public static AnsiString of(CharSequence raw, ErrorMode errorMode) {
+    public static AnsiString valueOf(AnsiString string) {
+        return string == null ? NULL : string;
+    }
+
+    public static AnsiString valueOf(CharSequence raw) {
         if (raw == null) {
+            return null;
+        }
+        return parse(raw);
+    }
+
+    public static AnsiString valueOf(Object object) {
+        if (object == null) {
             return NULL;
+        }
+        if (object instanceof AnsiString) {
+            return ((AnsiString) object);
+        }
+        if (object instanceof CharSequence) {
+            return parse(((CharSequence) object));
+        }
+        return parse(object.toString());
+    }
+
+    public static AnsiString parse(CharSequence raw) {
+        return parse(raw, ErrorMode.DEFAULT, true);
+    }
+
+    public static AnsiString parse(CharSequence raw, ErrorMode errorMode) {
+        return parse(raw, errorMode, true);
+    }
+
+    public static AnsiString parse(CharSequence raw, boolean trimStates) {
+        return parse(raw, ErrorMode.DEFAULT, trimStates);
+    }
+
+    public static AnsiString parse(CharSequence raw, ErrorMode errorMode, boolean trimStates) {
+        if (raw == null) {
+            throw new NullPointerException();
         }
 
         final int rawLength = raw.length();
@@ -175,44 +215,63 @@ public final class AnsiString implements Serializable {
             }
         }
 
-        if (hasStates) {
+        if (builder.length() == 0) {
+            return EMPTY;
+        }
+
+        if (!hasStates) {
+            return new AnsiString(raw instanceof String ? ((String) raw) : builder.toString(), null, 0);
+        }
+
+        String plain = builder.toString();
+        if (plain.isEmpty()) {
+            return EMPTY;
+        }
+
+        if (trimStates) {
             final int statesFrom = trimStatesInit(states);
             final int statesLength = trimStatesTail(states, statesFrom);
-            if (statesLength != 0) {
+
+
+            if (statesLength == 0) {
+                return new AnsiString(plain, null, 0);
+            } else {
                 long[] ss = Arrays.copyOfRange(states, statesFrom, statesFrom + statesLength);
-                return new AnsiString(builder.toString(), ss, statesFrom);
+                return new AnsiString(plain, ss, statesFrom);
             }
+        } else {
+            return new AnsiString(plain, Arrays.copyOf(states, plain.length()), plain.length());
         }
-        return new AnsiString(raw instanceof String ? raw : builder.toString(), null, 0);
     }
 
-    @NotNull
-    public static AnsiString ofPlain(@NotNull CharSequence plain) {
+    public static AnsiString ofPlain(CharSequence plain) {
+        if (plain == null) {
+            return NULL;
+        }
+
         if (plain.length() == 0) {
             return EMPTY;
         }
-        return new AnsiString(plain, null, 0);
+        return new AnsiString(plain.toString(), null, 0);
     }
 
-    @NotNull
-    public static AnsiString concat(@NotNull AnsiString string1, @NotNull AnsiString string2) {
-        return string1.concat(string2);
+    public static AnsiString concat(AnsiString string1, AnsiString string2) {
+        return (string1 == null ? NULL : string1).concat(string2);
     }
 
-    @NotNull
-    public static AnsiString concat(@NotNull AnsiString... strings) {
+    public static AnsiString concat(AnsiString... strings) {
         if (strings.length == 0) {
             return EMPTY;
         }
         if (strings.length == 1) {
-            return strings[0];
+            AnsiString res = strings[0];
+            return res == null ? NULL : res;
         }
 
         return concat(Arrays.asList(strings));
     }
 
-    @NotNull
-    public static AnsiString concat(@NotNull Iterable<? extends AnsiString> strings) {
+    public static AnsiString concat(Iterable<? extends AnsiString> strings) {
         int length = 0;
         int stateFrom = -1;
         int stateLimit = -1;
@@ -259,28 +318,64 @@ public final class AnsiString implements Serializable {
         return new AnsiString(builder.toString(), states, stateFrom);
     }
 
-    @NotNull
-    public final CharSequence getPlain() {
+    public final String getPlain() {
         return plain;
     }
 
-    @NotNull
-    public final String getPlainString() {
-        return plain.toString();
+    public final long[] getStates() {
+        final int length = this.length();
+        long[] newStates = new long[length()];
+        if (states == null) {
+            return newStates;
+        }
+        System.arraycopy(states, 0, newStates, statesFrom, states.length);
+        return newStates;
     }
 
-    @Range(from = 0, to = Integer.MAX_VALUE)
+    public final long stateAt(int index) {
+        if (index < 0 || index >= length()) {
+            throw new IndexOutOfBoundsException("Index out of range: " + index);
+        }
+        final long[] states = this.states;
+        if (states == null) {
+            return 0L;
+        }
+        int idx = index - statesFrom;
+        return (idx < 0 || idx >= states.length) ? 0L : states[idx];
+    }
+
+    //region String like operators
+
     public final int length() {
         return plain.length();
     }
 
-    public final char charAt(@Range(from = 0, to = Integer.MAX_VALUE - 1) int index) {
+    public final boolean isEmpty() {
+        return plain.isEmpty();
+    }
+
+    public final char charAt(int index) {
         return plain.charAt(index);
     }
 
-    @NotNull
+    public final int codePointAt(int index) {
+        return plain.codePointAt(index);
+    }
+
+    public final int codePointBefore(int index) {
+        return plain.codePointBefore(index);
+    }
+
+    public final int codePointCount(int beginIndex, int endIndex) {
+        return plain.codePointCount(beginIndex, endIndex);
+    }
+
+    public final int offsetByCodePoints(int index, int codePointOffset) {
+        return plain.offsetByCodePoints(index, codePointOffset);
+    }
+
     public final AnsiString substring(final int beginIndex, final int endIndex) {
-        final CharSequence plain = this.plain;
+        final String plain = this.plain;
         final int size = plain.length();
 
         if (beginIndex < 0 || beginIndex >= size) {
@@ -296,7 +391,7 @@ public final class AnsiString implements Serializable {
         final long[] states = this.states;
 
         if (states == null) {
-            return new AnsiString(plain.subSequence(beginIndex, endIndex), null, 0);
+            return new AnsiString(plain.substring(beginIndex, endIndex), null, 0);
         }
 
         final int newLen = endIndex - beginIndex;
@@ -304,7 +399,7 @@ public final class AnsiString implements Serializable {
         final int statesLen = states.length;
 
         if (newLen == 0 || statesFrom >= endIndex || statesFrom + statesLen <= beginIndex) {
-            return new AnsiString(plain.subSequence(beginIndex, endIndex), null, 0);
+            return new AnsiString(plain.substring(beginIndex, endIndex), null, 0);
         }
 
         final int newStateFrom = Math.max(statesFrom - beginIndex, 0);
@@ -314,21 +409,17 @@ public final class AnsiString implements Serializable {
 
         final long[] newStates = rf == rt ? null : Arrays.copyOfRange(states, rf, rt);
 
-        return new AnsiString(plain.subSequence(beginIndex, endIndex), newStates, newStateFrom);
+        return new AnsiString(plain.substring(beginIndex, endIndex), newStates, newStateFrom);
     }
 
-    @NotNull
-    public final IntStream chars() {
-        return plain.chars();
+    public final AnsiString concat(CharSequence string) {
+        return concat(AnsiString.parse(string));
     }
 
-    @NotNull
-    public final IntStream codePoints() {
-        return plain.codePoints();
-    }
-
-    @NotNull
-    public final AnsiString concat(@NotNull AnsiString other) {
+    public final AnsiString concat(AnsiString other) {
+        if (other == null) {
+            return concat(NULL);
+        }
         final int otherLength = other.length();
         if (otherLength == 0) {
             return this;
@@ -339,7 +430,7 @@ public final class AnsiString implements Serializable {
             return other;
         }
 
-        String newPlain = this.plain.toString() + other.plain;
+        String newPlain = this.plain + other.plain;
 
         final long[] states = this.states;
         final long[] otherStates = other.states;
@@ -363,18 +454,72 @@ public final class AnsiString implements Serializable {
         }
     }
 
-    @NotNull
-    public final AnsiString overlay(@NotNull Attribute attribute) {
+    public final int indexOf(int ch) {
+        return plain.indexOf(ch);
+    }
+
+    public final int indexOf(int ch, int fromIndex) {
+        return plain.indexOf(ch, fromIndex);
+    }
+
+    public final int lastIndexOf(int ch) {
+        return plain.lastIndexOf(ch);
+    }
+
+    public final int lastIndexOf(int ch, int fromIndex) {
+        return plain.lastIndexOf(ch, fromIndex);
+    }
+
+    public final int indexOf(/* NotNull */ String str) {
+        return plain.indexOf(str);
+    }
+
+    public final int indexOf(/* NotNull */ String str, int fromIndex) {
+        return plain.indexOf(str, fromIndex);
+    }
+
+    public int lastIndexOf(/* NotNull */ String str) {
+        return plain.lastIndexOf(str);
+    }
+
+    public int lastIndexOf(/* NotNull */ String str, int fromIndex) {
+        return plain.lastIndexOf(str, fromIndex);
+    }
+
+    //endregion
+
+    public final AnsiString overlay(Overlayable overlayable) {
+        if (overlayable == null) {
+            throw new NullPointerException();
+        }
+
+        if (overlayable instanceof Attribute) {
+            return overlay(((Attribute) overlayable));
+        }
+        if (overlayable instanceof AttributeWithRange) {
+            AttributeWithRange attr = (AttributeWithRange) overlayable;
+            if (attr.end < 0) {
+                return overlay(attr.attribute, attr.start);
+            } else {
+                return overlay(attr.attribute, attr.start, attr.end);
+            }
+        }
+        throw new AssertionError();
+    }
+
+    public final AnsiString overlay(Attribute attribute) {
         return overlay(attribute, 0, length());
     }
 
-    @NotNull
-    public final AnsiString overlay(@NotNull Attribute attribute, int start) {
+    public final AnsiString overlay(Attribute attribute, int start) {
         return overlay(attribute, start, length());
     }
 
-    @NotNull
-    public final AnsiString overlay(@NotNull Attribute attribute, int start, int end) {
+    public final AnsiString overlay(Attribute attribute, int start, int end) {
+        if (attribute == null) {
+            throw new NullPointerException();
+        }
+
         final int length = this.length();
         if (start > end) {
             throw new IllegalArgumentException("startIndex(" + start + ") > endIndex(" + end + ")");
@@ -417,6 +562,113 @@ public final class AnsiString implements Serializable {
         return new AnsiString(plain, newStates, newStatesFrom);
     }
 
+    public final AnsiString overlayAll(Overlayable... oas) {
+        return overlayAll(false, Arrays.asList(oas));
+    }
+
+    public final AnsiString overlayAll(boolean trimStates, Overlayable... oas) {
+        return overlayAll(trimStates, Arrays.asList(oas));
+    }
+
+    public final AnsiString overlayAll(Iterable<? extends Overlayable> oas) {
+        return overlayAll(false, oas);
+    }
+
+    public final AnsiString overlayAll(boolean trimStates, Iterable<? extends Overlayable> oas) {
+        Iterator<? extends Overlayable> iterator = oas.iterator();
+        if (!iterator.hasNext()) {
+            return this;
+        }
+
+        final int length = this.length();
+        if (length == 0) {
+            return this;
+        }
+
+        long[] newStates = new long[length];
+        if (states != null) {
+            System.arraycopy(states, 0, newStates, statesFrom, states.length);
+        }
+
+        while (iterator.hasNext()) {
+            Overlayable oa = iterator.next();
+            if (oa == null) {
+                continue;
+            }
+            final Attribute attr;
+            final int start;
+            final int end;
+
+            if (oa instanceof Attribute) {
+                attr = ((Attribute) oa);
+                start = 0;
+                end = length;
+            } else {
+                AttributeWithRange ar = (AttributeWithRange) oa;
+                attr = ar.attribute;
+                start = ar.start;
+                end = ar.end < 0 ? length : ar.end;
+            }
+
+            if (end > length) {
+                throw new IndexOutOfBoundsException("Index out of range: " + end);
+            }
+
+            for (int i = start; i < end; i++) {
+                newStates[i] = attr.transform(newStates[i]);
+            }
+        }
+
+        if (trimStates) {
+            final int newStatesFrom = trimStatesInit(newStates);
+            final int newStatesLength = trimStatesTail(newStates, newStatesFrom);
+
+            if (newStatesLength == 0) {
+                return new AnsiString(plain, null, 0);
+            } else if (newStatesLength == newStates.length) {
+                return new AnsiString(plain, newStates, 0);
+            } else {
+                long[] ss = Arrays.copyOfRange(newStates, newStatesFrom, newStatesFrom + newStatesLength);
+                return new AnsiString(plain, ss, statesFrom);
+            }
+        } else {
+            return new AnsiString(plain, newStates, 0);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final int compareTo(AnsiString o) {
+        return toString().compareTo(o.toString());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof AnsiString)) {
+            return false;
+        }
+        return toString().equals(o.toString());
+    }
+
+    private transient int hashCode;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final int hashCode() {
+        if (hashCode != 0) {
+            return hashCode;
+        }
+
+        return hashCode = toString().hashCode();
+    }
+
     private transient Object encodedCache = null;
 
     private String getCache() {
@@ -427,13 +679,15 @@ public final class AnsiString implements Serializable {
         if (cache instanceof String) {
             return ((String) cache);
         }
-        if (cache instanceof WeakReference<?>) {
-            return (String) ((WeakReference<?>) cache).get();
+        if (cache instanceof Reference<?>) {
+            return (String) ((Reference<?>) cache).get();
         }
         return null;
     }
 
-    @NotNull
+    /**
+     *
+     */
     @Override
     public final String toString() {
         String res = getCache();
@@ -447,10 +701,11 @@ public final class AnsiString implements Serializable {
                 return res;
             }
 
-            final CharSequence plain = this.plain;
+            final String plain = this.plain;
             final long[] states = this.states;
             if (states == null) {
-                return (String) (this.encodedCache = plain.toString());
+                this.encodedCache = plain;
+                return plain;
             }
 
             final int length = this.length();
@@ -515,7 +770,20 @@ public final class AnsiString implements Serializable {
         public abstract int handle(int sourceIndex, CharSequence raw);
     }
 
-    public static abstract class Attribute {
+    public static abstract class Overlayable {
+        Overlayable() {
+        }
+
+        public final AnsiString overlay(CharSequence string) {
+            return AnsiString.parse(string).overlay(this);
+        }
+
+        public final AnsiString overlay(AnsiString string) {
+            return string.overlay(this);
+        }
+    }
+
+    public static abstract class Attribute extends Overlayable implements Comparable<Attribute> {
         final long resetMask;
         final long applyMask;
 
@@ -526,8 +794,6 @@ public final class AnsiString implements Serializable {
 
         static void emitAnsiCodes0(long currentState, long nextState, Appendable output) {
             try {
-
-
                 if (currentState != nextState) {
 
                     int hardOffMask = Bold.category.mask();
@@ -547,15 +813,158 @@ public final class AnsiString implements Serializable {
                     }
                 }
             } catch (IOException e) {
-                throw new UncheckedIOException(e);
+                throw new RuntimeException(e);
             }
         }
 
-        @NotNull
         public static String emitAnsiCodes(long currentState, long nextState) {
             StringBuilder builder = new StringBuilder();
             emitAnsiCodes0(currentState, nextState, builder);
             return builder.toString();
+        }
+
+        public static Attribute empty() {
+            return Attrs.EMPTY;
+        }
+
+        public static Attribute of() {
+            return Attrs.EMPTY;
+        }
+
+        public static Attribute of(Attribute attribute) {
+            if (attribute == null) {
+                throw new NullPointerException();
+            }
+            return attribute;
+        }
+
+        public static Attribute of(Attribute attribute1, Attribute attribute2) {
+            if (attribute1.equals(attribute2)) {
+                return attribute1;
+            }
+            return of(new Attribute[]{attribute1, attribute2});
+        }
+
+        public static Attribute of(Attribute... attributes) {
+            int attributesLength = attributes.length;
+            if (attributesLength == 0) {
+                return Attrs.EMPTY;
+            }
+            if (attributesLength == 1) {
+                return attributes[0];
+            }
+
+            TreeSet<Attr> output = new TreeSet<>();
+            long resetMask = 0L;
+            long applyMask = 0L;
+
+            for (int i = attributesLength - 1; i >= 0; i--) {
+                final Attribute attr = attributes[i];
+                if (attr instanceof Attrs) {
+                    for (Attr attribute : ((Attrs) attr).attributes) {
+                        if ((attribute.resetMask & ~resetMask) != 0) {
+                            if ((attribute.applyMask & resetMask) == 0) {
+                                applyMask = applyMask | attribute.applyMask;
+                            }
+                            resetMask = resetMask | attribute.resetMask;
+                            output.add(attribute);
+                        }
+                    }
+                } else {
+                    if ((attr.resetMask & ~resetMask) != 0) {
+                        if ((attr.applyMask & resetMask) == 0) {
+                            applyMask = applyMask | attr.applyMask;
+                        }
+                        resetMask = resetMask | attr.resetMask;
+                        output.add((Attr) attr);
+                    }
+                }
+            }
+
+            final int outputSize = output.size();
+            if (outputSize == 0) {
+                return Attrs.EMPTY;
+            }
+            if (outputSize == 1) {
+                return output.first();
+            }
+
+            return new Attrs(resetMask, applyMask, output.toArray(new Attr[outputSize]));
+        }
+
+        public static Attribute of(List<? extends Attribute> list) {
+            final ListIterator<? extends Attribute> it = list.listIterator(list.size());
+            return of(new Iterator<Attribute>() {
+                @Override
+                public final boolean hasNext() {
+                    return it.hasPrevious();
+                }
+
+                @Override
+                public final Attribute next() {
+                    return it.previous();
+                }
+
+                @Override
+                public final void remove() {
+                    throw new UnsupportedOperationException("remove");
+                }
+            });
+        }
+
+        @SuppressWarnings("unchecked")
+        public static Attribute of(/* NotNull */  Iterable<? extends Attribute> attributes) {
+            if (attributes instanceof List<?>) {
+                return of(((List<Attribute>) attributes));
+            }
+            LinkedList<Attribute> l = new LinkedList<>();
+            for (Attribute attribute : attributes) {
+                l.add(attribute);
+            }
+            return of(l);
+        }
+
+        private static Attribute of(Iterator<? extends Attribute> reverseIterator) {
+            if (!reverseIterator.hasNext()) {
+                return Attrs.EMPTY;
+            }
+
+            TreeSet<Attr> output = new TreeSet<>();
+            long resetMask = 0L;
+            long applyMask = 0L;
+
+            while (reverseIterator.hasNext()) {
+                final Attribute attr = reverseIterator.next();
+                if (attr instanceof Attrs) {
+                    for (Attr attribute : ((Attrs) attr).attributes) {
+                        if ((attribute.resetMask & ~resetMask) != 0) {
+                            if ((attribute.applyMask & resetMask) == 0) {
+                                applyMask = applyMask | attribute.applyMask;
+                            }
+                            resetMask = resetMask | attribute.resetMask;
+                            output.add(attribute);
+                        }
+                    }
+                } else {
+                    if ((attr.resetMask & ~resetMask) != 0) {
+                        if ((attr.applyMask & resetMask) == 0) {
+                            applyMask = applyMask | attr.applyMask;
+                        }
+                        resetMask = resetMask | attr.resetMask;
+                        output.add((Attr) attr);
+                    }
+                }
+            }
+
+            final int outputSize = output.size();
+            if (outputSize == 0) {
+                return Attrs.EMPTY;
+            }
+            if (outputSize == 1) {
+                return output.first();
+            }
+
+            return new Attrs(resetMask, applyMask, output.toArray(new Attr[outputSize]));
         }
 
         public abstract Attribute concat(Attribute other);
@@ -564,9 +973,26 @@ public final class AnsiString implements Serializable {
             return (state & ~resetMask) | applyMask;
         }
 
-        @NotNull
-        public AnsiString overlay(@NotNull AnsiString string) {
-            return string.overlay(this);
+        public final AttributeWithRange withRange(int start) {
+            if (start < 0) {
+                throw new IllegalArgumentException("startIndex(" + start + ") < 0");
+            }
+            return new AttributeWithRange(this, start);
+        }
+
+        public final AttributeWithRange withRange(int start, int end) {
+            if (start > end) {
+                throw new IllegalArgumentException("startIndex(" + start + ") > endIndex(" + end + ")");
+            }
+            if (start < 0) {
+                throw new IllegalArgumentException("startIndex(" + start + ") < 0");
+            }
+            return new AttributeWithRange(this, start, end);
+        }
+
+        @Override
+        public int compareTo(AnsiString.Attribute o) {
+            return Long.compare(this.applyMask, o.applyMask);
         }
 
         @Override
@@ -575,35 +1001,34 @@ public final class AnsiString implements Serializable {
                 return false;
             }
 
-            if (o instanceof Attrs) {
-                Attrs other = (Attrs) o;
-                return other.attributes.length == 1 && this == other.attributes[0];
-            } else {
-                return this == o;
-            }
+            return this.applyMask == ((Attribute) o).applyMask;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (applyMask ^ (applyMask >>> 32));
         }
     }
 
-    public static final class AttributeWithRange {
-        @NotNull
+    public static final class AttributeWithRange extends Overlayable {
         public final Attribute attribute;
 
         public final int start;
         public final int end;
 
-        AttributeWithRange(@NotNull Attribute attribute) {
+        AttributeWithRange(Attribute attribute) {
             this.attribute = attribute;
             this.start = 0;
             this.end = -1;
         }
 
-        AttributeWithRange(@NotNull Attribute attribute, int start) {
+        AttributeWithRange(Attribute attribute, int start) {
             this.attribute = attribute;
             this.start = start;
             this.end = -1;
         }
 
-        AttributeWithRange(@NotNull Attribute attribute, int start, int end) {
+        AttributeWithRange(Attribute attribute, int start, int end) {
             this.attribute = attribute;
             this.start = start;
             this.end = end;

@@ -39,11 +39,12 @@ final class Trie {
             vs[i + 2] = AnsiString.Back.category;
 
 
-            return parseMap = new Trie('\u001b', '\u001b',
+            parseMap = new Trie('\u001b', '\u001b',
                     new Trie[]{
                             new Trie('[', '[',
                                     new Trie[]{trie(Arrays.asList(ks), Arrays.asList(vs))}, null)},
                     null);
+            return parseMap;
         }
     }
 

@@ -1,39 +1,55 @@
 package asia.kala.ansi;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
-import java.util.Objects;
 
 final class Attrs extends AnsiString.Attribute {
+    static final Attr[] EMPTY_ATTR_ARRAY = new Attr[0];
+
+    static final Attrs EMPTY = new Attrs(0L, 0L, EMPTY_ATTR_ARRAY);
+
     final Attr[] attributes;
 
-    Attrs(long resetMask, long applyMask, Attr @NotNull [] attributes) {
+    Attrs(long resetMask, long applyMask, Attr[] attributes) {
         super(resetMask, applyMask);
         this.attributes = attributes;
     }
 
     @Override
     public final AnsiString.Attribute concat(AnsiString.Attribute other) {
-        Objects.requireNonNull(other);
-        throw new UnsupportedOperationException();//TODO
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(attributes);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof AnsiString.Attribute)) {
-            return false;
+        if (other == null) {
+            throw new NullPointerException();
         }
-        if (o instanceof Attrs) {
-            Attrs other = (Attrs) o;
-            return this.attributes == other.attributes; // TODO
+
+        final Attr[] attributes = this.attributes;
+        final int attributesLength = attributes.length;
+        if (attributesLength == 0) {
+            return other;
+        }
+
+        if (other instanceof Attrs) {
+            final Attrs os = (Attrs) other;
+            final int osAttributesLength = os.attributes.length;
+
+            if (osAttributesLength == 0) {
+                return this;
+            }
+            if (Arrays.equals(this.attributes, os.attributes)) {
+                return this;
+            }
+
+            Attr[] newAttrs = new Attr[attributesLength + osAttributesLength];
+            System.arraycopy(attributes, 0, newAttrs, 0, attributesLength);
+            System.arraycopy(os.attributes, 0, newAttrs, attributesLength, osAttributesLength);
+            return AnsiString.Attribute.of(newAttrs);
         } else {
-            return this.attributes.length == 1 && this.attributes[0] == o;
+            int idx = Arrays.binarySearch(attributes, other);
+            if (idx < 0) {
+                Attr[] s = Arrays.copyOfRange(attributes, 0, attributesLength + 1);
+                s[attributesLength] = ((Attr) other);
+                return AnsiString.Attribute.of(s);
+            } else {
+                return this;
+            }
         }
     }
 

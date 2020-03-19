@@ -1,7 +1,5 @@
 package asia.kala.ansi;
 
-import java.util.Objects;
-
 abstract class Attr extends AnsiString.Attribute {
     final String escape;
 
@@ -12,9 +10,15 @@ abstract class Attr extends AnsiString.Attribute {
 
     @Override
     public final AnsiString.Attribute concat(AnsiString.Attribute other) {
-        Objects.requireNonNull(other);
+        if (other == null) {
+            throw new NullPointerException();
+        }
 
-        throw new UnsupportedOperationException(); // TODO
+        if (other instanceof Attrs) {
+            return other.concat(this);
+        } else {
+            return AnsiString.Attribute.of(this, other);
+        }
     }
 
     static final class Escape extends Attr {

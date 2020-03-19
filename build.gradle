@@ -22,24 +22,9 @@ allprojects {
 
     modularity.mixedJavaRelease 8
 
-    compileTestJava {
-        moduleOptions {
-            addModules = ['org.junit.jupiter.api']
-            addReads = [
-                    (moduleName): 'org.junit.jupiter.api'
-            ]
-        }
-    }
-
     repositories {
         mavenLocal()
         mavenCentral()
-    }
-
-    dependencies {
-        compileOnly group: 'org.jetbrains', name: 'annotations', version: '19.0.0'
-
-        testImplementation group: 'junit', name: 'junit', version: '4.12'
     }
 
     if (project == rootProject) {
@@ -61,8 +46,6 @@ allprojects {
             from javadoc
             archiveClassifier = 'javadoc'
         }
-
-
     }
 
     task sourcesJar(type: Jar) {
@@ -131,3 +114,39 @@ allprojects {
     }
 }
 
+test {
+    testLogging.showStandardStreams = true
+    useJUnitPlatform()
+
+    moduleOptions {
+        runOnClasspath = true
+    }
+}
+
+compileTestJava {
+    moduleOptions {
+        addModules = ['org.junit.jupiter.api']
+        addReads = [
+                (moduleName): 'org.junit.jupiter.api'
+        ]
+    }
+}
+
+dependencies {
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: '5.5.2'
+}
+
+task processClassFile(dependsOn: compileJava) {
+    doLast {
+        FileTree tree = fileTree('build/classes/java/main')
+        tree.include '**/*.class'
+        tree.each {
+            RandomAccessFile rf = new RandomAccessFile(it, "rw")
+            rf.seek(7)   // major version
+            rf.write(49) // java 5
+            rf.close()
+        }
+    }
+}
+
+jar.dependsOn(processClassFile)
