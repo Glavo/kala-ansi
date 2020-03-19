@@ -8,8 +8,16 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The {@code AnsiString} class represents a string decorated with ANSI colors.
+ *
+ * <p>AnsiString provides some basic string methods that work based on plain text,
+ * you can invoke the {@link #getPlain()}  method to get the plain text and do more on it.
+ * If you need the string containing ANSI escape characters, you can invoke the {@link #toString()} method to get it.
+ */
 public final class AnsiString implements Serializable, Comparable<AnsiString> {
     private static final long serialVersionUID = -2640452895881997219L;
+    private static final int hashMagic = -1064710924;
 
     static final Pattern ANSI_PATTERN = Pattern.compile("(\u009b|\u001b\\[)[0-?]*[ -/]*[@-~]");
     static final String RESET = "\u001b[0m";
@@ -30,7 +38,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
-    public static int trimStatesInit(long[] states) {
+    static int trimStatesInit(long[] states) {
         if (states == null) {
             return 0;
         }
@@ -45,14 +53,14 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return statesLength;
     }
 
-    public static int trimStatesTail(long[] states, int limit) {
+    static int trimStatesTail(long[] states, int limit) {
         if (states == null) {
             return 0;
         }
         return trimStatesTail(states, limit, states.length);
     }
 
-    public static int trimStatesTail(long[] states, int limit, int arrayLength) {
+    static int trimStatesTail(long[] states, int limit, int arrayLength) {
         if (states == null) {
             return 0;
         }
@@ -64,21 +72,33 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return 0;
     }
 
-    public static AnsiString valueOf() {
-        return EMPTY;
-    }
-
-    public static AnsiString valueOf(AnsiString string) {
-        return string == null ? NULL : string;
-    }
-
+    /**
+     * Returns the ansi string representation of the {@code raw} argument.
+     * <p>
+     * This method is equivalent to {@code AnsiString.parse(raw)}.
+     *
+     * @param raw an {@code CharSequence}
+     * @return if the argument is {@code null}, then a stateless ansi string equal to
+     * {@code AnsiString.valueOf("null")}; otherwise, the value of
+     * {@code AnsiString.parse(object.toString())} is returned
+     */
     public static AnsiString valueOf(CharSequence raw) {
         if (raw == null) {
-            return null;
+            return NULL;
         }
         return parse(raw);
     }
 
+    /**
+     * Returns the ansi string representation of the {@code Object} argument.
+     * <p>
+     * This method is equivalent to {@code AnsiString.parse(Objects.toString(object))}.
+     *
+     * @param object an {@code Object}
+     * @return if the argument is {@code null}, then a stateless ansi string equal to
+     * {@code AnsiString.valueOf("null")}; otherwise, the value of
+     * {@code AnsiString.parse(object.toString())} is returned
+     */
     public static AnsiString valueOf(Object object) {
         if (object == null) {
             return NULL;
@@ -92,18 +112,61 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return parse(object.toString());
     }
 
+    /**
+     * Parse a {@code CharSequence} containing ANSI escape sequence to {@code AnsiString}.
+     *
+     * <p>If you ensure that the {@code CharSequence} does not contain ANSI escape sequences,
+     * use the {@link #ofPlain(CharSequence)} method to avoid the extra overhead of parsing the string.
+     *
+     * @param raw an not {@code null} {@code CharSequence}.
+     * @return the parsed {@code AnsiString}
+     * @see #parse(CharSequence, ErrorMode, boolean)
+     */
     public static AnsiString parse(CharSequence raw) {
         return parse(raw, ErrorMode.DEFAULT, true);
     }
 
+    /**
+     * Parse a {@code CharSequence} containing ANSI escape sequence to {@code AnsiString}.
+     *
+     * <p>If you ensure that the {@code CharSequence} does not contain ANSI escape sequences,
+     * use the {@link #ofPlain(CharSequence)} method to avoid the extra overhead of parsing the string.
+     *
+     * @param raw       an not {@code null} {@code CharSequence}.
+     * @param errorMode handler of unrecognized ANSI escape sequences
+     * @return the parsed {@code AnsiString}
+     * @see #parse(CharSequence, ErrorMode, boolean)
+     */
     public static AnsiString parse(CharSequence raw, ErrorMode errorMode) {
         return parse(raw, errorMode, true);
     }
 
+    /**
+     * Parse a {@code CharSequence} containing ANSI escape sequence to {@code AnsiString}.
+     *
+     * <p>If you ensure that the {@code CharSequence} does not contain ANSI escape sequences,
+     * use the {@link #ofPlain(CharSequence)} method to avoid the extra overhead of parsing the string.
+     *
+     * @param raw        an not {@code null} {@code CharSequence}.
+     * @param trimStates if {@code true}, compacting the states array
+     * @return the parsed {@code AnsiString}
+     * @see #parse(CharSequence, ErrorMode, boolean)
+     */
     public static AnsiString parse(CharSequence raw, boolean trimStates) {
         return parse(raw, ErrorMode.DEFAULT, trimStates);
     }
 
+    /**
+     * Parse a {@code CharSequence} containing ANSI escape sequence to {@code AnsiString}.
+     *
+     * <p>If you ensure that the {@code CharSequence} does not contain ANSI escape sequences,
+     * use the {@link #ofPlain(CharSequence)} method to avoid the extra overhead of parsing the string.
+     *
+     * @param raw        an not {@code null} {@code CharSequence}.
+     * @param errorMode  handler of unrecognized ANSI escape sequences
+     * @param trimStates if {@code true}, compacting the states array
+     * @return the parsed {@code AnsiString}
+     */
     public static AnsiString parse(CharSequence raw, ErrorMode errorMode, boolean trimStates) {
         if (raw == null) {
             throw new NullPointerException();
@@ -244,9 +307,12 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
+    /**
+     * Construct an {@code AnsiString} from plain text.
+     */
     public static AnsiString ofPlain(CharSequence plain) {
         if (plain == null) {
-            return NULL;
+            throw new NullPointerException();
         }
 
         if (plain.length() == 0) {
@@ -255,10 +321,23 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return new AnsiString(plain.toString(), null, 0);
     }
 
+    /**
+     * Concatenates two {@code AnsiString}s.
+     *
+     * @param string1 the first {@code AnsiString}
+     * @param string2 the second {@code AnsiString}
+     * @return the concatenation of the two input strings
+     */
     public static AnsiString concat(AnsiString string1, AnsiString string2) {
         return (string1 == null ? NULL : string1).concat(string2);
     }
 
+    /**
+     * Concatenates {@code AnsiString}s.
+     *
+     * @param strings input strings
+     * @return the concatenation of all input strings
+     */
     public static AnsiString concat(AnsiString... strings) {
         if (strings.length == 0) {
             return EMPTY;
@@ -271,6 +350,12 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return concat(Arrays.asList(strings));
     }
 
+    /**
+     * Concatenates {@code AnsiString}s.
+     *
+     * @param strings input strings
+     * @return the concatenation of all input strings
+     */
     public static AnsiString concat(Iterable<? extends AnsiString> strings) {
         int length = 0;
         int stateFrom = -1;
@@ -318,6 +403,11 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return new AnsiString(builder.toString(), states, stateFrom);
     }
 
+    /**
+     * Get the plain text of the {@code AnsiString}.
+     *
+     * @return the plain text of the {@code AnsiString}
+     */
     public final String getPlain() {
         return plain;
     }
@@ -344,36 +434,128 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return (idx < 0 || idx >= states.length) ? 0L : states[idx];
     }
 
-    //region String like operators
-
+    /**
+     * Returns the length of the plain text.
+     *
+     * @return the length of the plain text.
+     * @see String#length()
+     */
     public final int length() {
         return plain.length();
     }
 
+    /**
+     * Returns {@code true} if, and only if, {@link #length()} is {@code 0}.
+     *
+     * @return {@code true} if {@link #length()} is {@code 0}, otherwise
+     * {@code false}
+     */
     public final boolean isEmpty() {
         return plain.isEmpty();
     }
 
+    /**
+     * Returns the {@code char} value at the specified index of the plain text
+     *
+     * @param index the index of the {@code char} value.
+     * @return the {@code char} value at the specified index of the plain text.
+     * The first {@code char} value is at index {@code 0}.
+     * @throws IndexOutOfBoundsException if the {@code index} argument is negative or not less
+     *                                   than the length of this string.
+     * @see #getPlain()
+     * @see String#charAt(int)
+     */
     public final char charAt(int index) {
         return plain.charAt(index);
     }
 
+    /**
+     * Returns the character (Unicode code point) at the specified index of the plain text.
+     * The index refers to {@code char} values (Unicode code units) and ranges from {@code 0} to
+     * {@link #length()}{@code  - 1}.
+     *
+     * @param index the index to the {@code char} values
+     * @return the code point value of the character at the {@code index} of the plain text
+     * @throws IndexOutOfBoundsException if the {@code index} argument is negative or not less than
+     *                                   the length of the plain text.
+     * @see #getPlain()
+     * @see String#codePointAt(int)
+     */
     public final int codePointAt(int index) {
         return plain.codePointAt(index);
     }
 
+    /**
+     * Returns the character (Unicode code point) before the specified index of the plain text.
+     * The index refers to {@code char} values (Unicode code units) and ranges
+     * from {@code 1} to {@link AnsiString#length() length}.
+     *
+     * @param index the index following the code point of the plain text that should be returned
+     * @return the Unicode code point value before the given index of the plain text.
+     * @throws IndexOutOfBoundsException if the {@code index} argument is less than 1
+     *                                   or greater than the length of the plain text.
+     * @see #getPlain()
+     * @see String#codePointBefore(int)
+     */
     public final int codePointBefore(int index) {
         return plain.codePointBefore(index);
     }
 
+    /**
+     * Returns the number of Unicode code points in the specified text range of the plain text.
+     * The text range begins at the specified {@code beginIndex} and extends to the {@code char}
+     * at index {@code endIndex - 1}. Thus the length (in {@code char}s) of the text range is
+     * {@code endIndex-beginIndex}. Unpaired surrogates within the text range count as one code point each.
+     *
+     * @param beginIndex the index to the first {@code char} of the text range.
+     * @param endIndex   the index after the last {@code char} of the text range.
+     * @return the number of Unicode code points in the specified text range of the plain text
+     * @throws IndexOutOfBoundsException if the {@code beginIndex} is negative, or {@code endIndex}
+     *                                   is larger than the length of this {@code AnsiString}, or
+     *                                   {@code beginIndex} is larger than {@code endIndex}.
+     * @see #getPlain()
+     * @see String#codePointCount(int, int)
+     */
     public final int codePointCount(int beginIndex, int endIndex) {
         return plain.codePointCount(beginIndex, endIndex);
     }
 
+    /**
+     * Returns the index within the plain text that is offset from the given {@code index} by
+     * {@code codePointOffset} code points. Unpaired surrogates within the text range given
+     * by {@code index} and {@code codePointOffset} count as one code point each.
+     *
+     * @param index           the index to be offset
+     * @param codePointOffset the offset in code points
+     * @return the index within this {@code String}
+     * @throws IndexOutOfBoundsException if {@code index} is negative or larger then the length of this
+     *                                   {@code AnsiString}, or if {@code codePointOffset} is positive
+     *                                   and the substring starting with {@code index} has fewer
+     *                                   than {@code codePointOffset} code points,
+     *                                   or if {@code codePointOffset} is negative and the substring
+     *                                   before {@code index} has fewer than the absolute value
+     *                                   of {@code codePointOffset} code points.
+     * @see #getPlain()
+     * @see String#offsetByCodePoints(int, int)
+     */
     public final int offsetByCodePoints(int index, int codePointOffset) {
         return plain.offsetByCodePoints(index, codePointOffset);
     }
 
+    /**
+     * Returns a string that is a substring of this ansi string. The substring
+     * begins at the specified {@code beginIndex} and extends to the character
+     * at index {@code endIndex - 1}. Thus the length of the substring is {@code endIndex-beginIndex}.
+     *
+     * @param beginIndex the beginning index, inclusive.
+     * @param endIndex   the ending index, exclusive.
+     * @return the specified substring.
+     * @throws IndexOutOfBoundsException if the {@code beginIndex} is negative, or
+     *                                   {@code endIndex} is larger than the length of
+     *                                   this {@code AnsiString} object, or
+     *                                   {@code beginIndex} is larger than
+     *                                   {@code endIndex}.
+     */
     public final AnsiString substring(final int beginIndex, final int endIndex) {
         final String plain = this.plain;
         final int size = plain.length();
@@ -412,10 +594,26 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return new AnsiString(plain.substring(beginIndex, endIndex), newStates, newStateFrom);
     }
 
+    /**
+     * Concatenates the specified {@code CharSequence} to the end of this ansi string.
+     *
+     * @param string the {@code CharSequence} that is concatenated to the end
+     *               of this {@code AnsiString}.
+     * @return an {@code AnsiString} that represents the concatenation of this object's
+     * characters and states followed by the string argument's characters .
+     */
     public final AnsiString concat(CharSequence string) {
-        return concat(AnsiString.parse(string));
+        return concat(AnsiString.valueOf(string));
     }
 
+    /**
+     * Concatenates the specified {@code AnsiString} to the end of this ansi string.
+     *
+     * @param other the {@code AnsiString} that is concatenated to the end
+     *              of this {@code AnsiString}
+     * @return an {@code AnsiString} that represents the concatenation of this object's
+     * characters and states followed by the string argument's characters and states
+     */
     public final AnsiString concat(AnsiString other) {
         if (other == null) {
             return concat(NULL);
@@ -430,7 +628,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             return other;
         }
 
-        String newPlain = this.plain + other.plain;
+        String newPlain = this.plain.concat(other.plain);
 
         final long[] states = this.states;
         final long[] otherStates = other.states;
@@ -454,39 +652,185 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
+    public final AnsiString trim() {
+        final String plain = this.plain;
+        int len = plain.length();
+        if (len == 0) {
+            return this;
+        }
+        int st = 0;
+
+        while (st < len && plain.charAt(st) <= ' ') {
+            ++st;
+        }
+        while (st < len && plain.charAt(len - 1) <= ' ') {
+            --len;
+        }
+        return substring(st, len);
+    }
+
+    /**
+     * Returns {@code true} if the plain text is empty or contains only
+     * {@linkplain Character#isWhitespace(int) white space} codepoints, otherwise {@code false}.
+     *
+     * @return {@code true} if the plain text is empty or contains only
+     * {@linkplain Character#isWhitespace(int) white space} codepoints, otherwise {@code false}
+     * @see #getPlain()
+     * @see String#isBlank()
+     */
+    public final boolean isBlank() {
+        final String plain = this.plain;
+        final int length = plain.length();
+        if (length == 0) {
+            return true;
+        }
+
+        for (int i = 0; i < length; ) {
+            final int cp = plain.codePointAt(i);
+            if (!Character.isWhitespace(cp)) {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    /**
+     * Returns the index within the plain text of the first occurrence of the specified character.
+     *
+     * @param ch a character (Unicode code point)
+     * @return the index of the first occurrence of the character in the
+     * character sequence represented by {@link #plain}, or {@code -1} if the character does not occur
+     * @see #getPlain()
+     * @see String#indexOf(int)
+     */
     public final int indexOf(int ch) {
         return plain.indexOf(ch);
     }
 
+    /**
+     * Returns the index within the plain text of the first occurrence of the specified character,
+     * starting the search at the specified index.
+     *
+     * @param ch        a character (Unicode code point)
+     * @param fromIndex the index to start the search from
+     * @return the index of the first occurrence of the character in the character sequence
+     * represented by {@link #plain} that is greater than or equal to {@code fromIndex}, or {@code -1}
+     * if the character does not occur
+     * @see #getPlain()
+     * @see String#indexOf(int, int)
+     */
     public final int indexOf(int ch, int fromIndex) {
         return plain.indexOf(ch, fromIndex);
     }
 
+    /**
+     * Returns the index within the plain text of the last occurrence of the specified character.
+     *
+     * @param ch a character (Unicode code point)
+     * @return the index of the last occurrence of the character in the character sequence
+     * represented by {@link #plain}, or {@code -1} if the character does not occur
+     * @see #getPlain()
+     * @see String#lastIndexOf(int)
+     */
     public final int lastIndexOf(int ch) {
         return plain.lastIndexOf(ch);
     }
 
+    /**
+     * Returns the index within this string of the last occurrence of
+     * the specified character, searching backward starting at the
+     * specified index. For values of {@code ch} in the range
+     * from 0 to 0xFFFF (inclusive), the index returned is the largest
+     * value <i>k</i> such that:
+     * <blockquote><pre>
+     * (this.charAt(<i>k</i>) == ch) {@code &&} (<i>k</i> &lt;= fromIndex)
+     * </pre></blockquote>
+     * is true. For other values of {@code ch}, it is the
+     * largest value <i>k</i> such that:
+     * <blockquote><pre>
+     * (this.codePointAt(<i>k</i>) == ch) {@code &&} (<i>k</i> &lt;= fromIndex)
+     * </pre></blockquote>
+     * is true. In either case, if no such character occurs in this
+     * string at or before position {@code fromIndex}, then
+     * {@code -1} is returned.
+     *
+     * <p>All indices are specified in {@code char} values
+     * (Unicode code units).
+     *
+     * @param ch        a character (Unicode code point).
+     * @param fromIndex the index to start the search from. There is no
+     *                  restriction on the value of {@code fromIndex}. If it is
+     *                  greater than or equal to the length of this string, it has
+     *                  the same effect as if it were equal to one less than the
+     *                  length of this string: this entire string may be searched.
+     *                  If it is negative, it has the same effect as if it were -1:
+     *                  -1 is returned.
+     * @return the index of the last occurrence of the character in the
+     * character sequence represented by this object that is less
+     * than or equal to {@code fromIndex}, or {@code -1}
+     * if the character does not occur before that point.
+     */
     public final int lastIndexOf(int ch, int fromIndex) {
         return plain.lastIndexOf(ch, fromIndex);
     }
 
-    public final int indexOf(/* NotNull */ String str) {
+    /**
+     * Returns the index within the plain text of the first occurrence of the specified substring.
+     *
+     * @param str the substring to search for
+     * @return the index of the first occurrence of the specified substring,
+     * or {@code -1} if there is no such occurrence
+     * @see #getPlain()
+     * @see String#indexOf(String)
+     */
+    public final int indexOf(String str) {
         return plain.indexOf(str);
     }
 
-    public final int indexOf(/* NotNull */ String str, int fromIndex) {
+    /**
+     * Returns the index within the plain text of the first occurrence of the
+     * specified substring, starting at the specified index.
+     *
+     * @param str       the substring to search for
+     * @param fromIndex the index from which to start the search
+     * @return the index of the first occurrence of the specified substring,
+     * starting at the specified index, or {@code -1} if there is no such occurrence
+     * @see #getPlain()
+     * @see String#indexOf(String, int)
+     */
+    public final int indexOf(String str, int fromIndex) {
         return plain.indexOf(str, fromIndex);
     }
 
-    public int lastIndexOf(/* NotNull */ String str) {
+    /**
+     * Returns the index within the plain text of the last occurrence of the
+     * specified substring.  The last occurrence of the empty string ""
+     * is considered to occur at the index value {@code this.length()}.
+     *
+     * @param str the substring to search for
+     * @return the index of the last occurrence of the specified substring,
+     * or {@code -1} if there is no such occurrence
+     * @see #getPlain()
+     * @see String#lastIndexOf(String)
+     */
+    public final int lastIndexOf(String str) {
         return plain.lastIndexOf(str);
     }
 
-    public int lastIndexOf(/* NotNull */ String str, int fromIndex) {
+    /**
+     * Returns the index within the plain text of the last occurrence of the
+     * specified substring, searching backward starting at the specified index.
+     *
+     * @param str       the substring to search for
+     * @param fromIndex the index to start the search from
+     * @return the index of the last occurrence of the specified substring,
+     * searching backward from the specified index,
+     * or {@code -1} if there is no such occurrence
+     */
+    public final int lastIndexOf(String str, int fromIndex) {
         return plain.lastIndexOf(str, fromIndex);
     }
-
-    //endregion
 
     public final AnsiString overlay(Overlayable overlayable) {
         if (overlayable == null) {
@@ -666,7 +1010,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             return hashCode;
         }
 
-        return hashCode = toString().hashCode();
+        return hashCode = toString().hashCode() + hashMagic;
     }
 
     private transient Object encodedCache = null;
@@ -686,10 +1030,17 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
     }
 
     /**
+     * Get the encoded string (including ANSI escape sequence represented by {@link #states }).
      *
+     * <p>Results are calculated when it is needed. If states is {@code null}, then this method
+     * will return plain text directly.
+     *
+     * <p>Currently, this method saves {@link WeakReference weak references} to the results.
+     * This method will not repeatedly calculate the value until the string is recovered by gc.
+     *
+     * @return the encoded string
      */
-    @Override
-    public final String toString() {
+    public final String getEncoded() {
         String res = getCache();
         if (res != null) {
             return res;
@@ -732,7 +1083,23 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @see #getEncoded()
+     */
+    @Override
+    public String toString() {
+        return getEncoded();
+    }
+
+    /**
+     * Used to handle unknown ANSI escape sequences when parsing a {@link CharSequence}.
+     */
     public enum ErrorMode {
+        /**
+         * Throw an exception and abort the parse.
+         */
         THROW {
             @Override
             public int handle(int sourceIndex, CharSequence raw) {
@@ -749,12 +1116,23 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
                 );
             }
         },
+
+        /**
+         * Skip the {@code \u001b} that kicks off the unknown Ansi escape but leave
+         * subsequent characters in place, so the end-user can see that an Ansi
+         * escape was entered e.g. via the [A[B[A[C that appears in the result
+         */
         SANITIZE {
             @Override
             public int handle(int sourceIndex, CharSequence raw) {
                 return sourceIndex + 1;
             }
         },
+
+        /**
+         * Find the end of the unknown Ansi escape and skip over it's characters
+         * entirely, so no trace of them appear in the parsed {@code AnsiString}.
+         */
         STRIP {
             @Override
             public int handle(int sourceIndex, CharSequence raw) {
@@ -765,24 +1143,47 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             }
         };
 
+        /**
+         * The default {@code ErrorMode}.
+         */
         public static final ErrorMode DEFAULT = THROW;
 
         public abstract int handle(int sourceIndex, CharSequence raw);
     }
 
+    /**
+     * Represents an {@link Attribute} or {@link AttributeWithRange}.
+     *
+     * @see Attribute
+     * @see AttributeWithRange
+     * @see AnsiString#overlay(Overlayable)
+     * @see AnsiString#overlayAll(Overlayable...)
+     * @see AnsiString#overlayAll(Iterable)
+     */
     public static abstract class Overlayable {
         Overlayable() {
         }
 
+        /**
+         * Apply this to the given {@code CharSequence}, making it take effect
+         * across the entire length of that string.
+         */
         public final AnsiString overlay(CharSequence string) {
             return AnsiString.parse(string).overlay(this);
         }
 
+        /**
+         * Apply this to the given {@code AnsiString}, making it take effect
+         * across the entire length of that string.
+         */
         public final AnsiString overlay(AnsiString string) {
             return string.overlay(this);
         }
     }
 
+    /**
+     * Used for mapping between status integer and ANSI escape sequences.
+     */
     public static abstract class Attribute extends Overlayable implements Comparable<Attribute> {
         final long resetMask;
         final long applyMask;
@@ -913,7 +1314,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
 
         @SuppressWarnings("unchecked")
-        public static Attribute of(/* NotNull */  Iterable<? extends Attribute> attributes) {
+        public static Attribute of(Iterable<? extends Attribute> attributes) {
             if (attributes instanceof List<?>) {
                 return of(((List<Attribute>) attributes));
             }
@@ -991,12 +1392,16 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
 
         @Override
-        public int compareTo(AnsiString.Attribute o) {
-            return Long.compare(this.applyMask, o.applyMask);
+        public final int compareTo(AnsiString.Attribute o) {
+            final long x = this.applyMask;
+            final long y = o.applyMask;
+
+            //noinspection UseCompareMethod
+            return (x < y) ? -1 : ((x == y) ? 0 : 1); // Compatible with java 5
         }
 
         @Override
-        public boolean equals(Object o) {
+        public final boolean equals(Object o) {
             if (!(o instanceof Attribute)) {
                 return false;
             }
@@ -1005,7 +1410,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
 
         @Override
-        public int hashCode() {
+        public final int hashCode() {
             return (int) (applyMask ^ (applyMask >>> 32));
         }
     }
@@ -1050,8 +1455,15 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
+    /**
+     * Represents the removal of all ansi text decoration. Doesn't fit into any
+     * convenient category, since it applies to them all.
+     */
     public static final Attribute Reset = new Attr.Escape("Reset", "\u001b[0m", Integer.MAX_VALUE, 0);
 
+    /**
+     * Attributes to turn text bold/bright or disable it.
+     */
     public static final class Bold {
         private Bold() {
         }
@@ -1062,6 +1474,9 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         public static final Attribute Off = category.makeNoneAttr("Off", 0);
     }
 
+    /**
+     * Attributes to reverse the background/foreground colors of your text, or un-reverse them.
+     */
     public static final class Reversed {
         private Reversed() {
         }
@@ -1072,6 +1487,9 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         public static final Attribute Off = category.makeAttr("Off", "\u001b[27m", 0);
     }
 
+    /**
+     * Attributes to enable or disable underlined text.
+     */
     public static final class Underlined {
         private Underlined() {
         }
@@ -1082,6 +1500,9 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         public static final Attribute Off = category.makeAttr("Off", "\u001b[24m", 0);
     }
 
+    /**
+     * Attributes to set or reset the color of your foreground text.
+     */
     public static final class Color {
         private Color() {
         }
@@ -1129,6 +1550,9 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
+    /**
+     * Attributes to set or reset the color of your background.
+     */
     public static final class Back {
         private Back() {
         }
