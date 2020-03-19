@@ -63,3 +63,4 @@ you can use the `AnsiString AnsiString.ofPlain(CharSequence plain)` to wrap the 
   
 ![Attributes](docs/Attributes.png)
 
+![TrueColor](docs/TrueColor.png)
