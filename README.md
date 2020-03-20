@@ -10,7 +10,42 @@ use it is as easy as use `java.lang.String`.
 
 ## Adding Kala Ansi to your build
 
-// TODO
+
+First, you need to add the jcenter repository to your build:
+
+Maven: 
+```xml
+<!-- Add jcenter repository -->
+<repositories>
+  <repository>
+    <id>jcenter</id>
+    <url>https://jcenter.bintray.com</url>
+  </repository>
+</repositories>
+```
+
+Gradle:
+```groovy
+repositories {
+    jcenter()
+}
+```
+
+Then add dependencies:
+
+Maven:
+```xml
+<dependency>
+  <groupId>asia.kala</groupId>
+  <artifactId>kala-ansi</artifactId>
+  <version>0.1.0-RC1</version>
+</dependency>
+```
+
+Gradle:
+```groovy
+implementation group: 'asia.kala', name: 'kala-ansi', version: '0.1.0-RC1'
+```
 
 ## Features
 
