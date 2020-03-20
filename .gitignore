@@ -1,4 +1,5 @@
 .idea/
 .gradle
 /build/
+/git-push.bat
 !gradle-wrapper.jar

@@ -1,5 +1,9 @@
 ## Kala Ansi [![Build Status](https://travis-ci.com/kala-projects/kala-ansi.svg?branch=master)](https://travis-ci.com/kala-projects/kala-ansi)
 
+Project on Github: [kala-projects/kala-ansi](https://github.com/kala-projects/kala-ansi)
+
+Project on Gitee:  [Glavo/kala-ansi](https://gitee.com/glavo-gitee/kala-ansi) 
+
 Kala Ansi is a lightweight java library make it very easy to use ANSI decorative strings.
 
 Kala Ansi provides `AnsiString` that you can use to easily decorate strings 
@@ -9,7 +13,6 @@ with ANSI escape sequences without worrying about color leaks.
 use it is as easy as use `java.lang.String`.
 
 ## Adding Kala Ansi to your build
-
 
 First, you need to add the jcenter repository to your build:
 
