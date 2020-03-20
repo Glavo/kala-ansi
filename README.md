@@ -15,7 +15,6 @@ First, you need to add the jcenter repository to your build:
 
 Maven: 
 ```xml
-<!-- Add jcenter repository -->
 <repositories>
   <repository>
     <id>jcenter</id>
