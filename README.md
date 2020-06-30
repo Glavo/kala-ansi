@@ -40,13 +40,13 @@ Maven:
 <dependency>
   <groupId>asia.kala</groupId>
   <artifactId>kala-ansi</artifactId>
-  <version>0.1.0-RC1</version>
+  <version>0.1.0</version>
 </dependency>
 ```
 
 Gradle:
 ```groovy
-implementation group: 'asia.kala', name: 'kala-ansi', version: '0.1.0-RC1'
+implementation group: 'asia.kala', name: 'kala-ansi', version: '0.1.0'
 ```
 
 ## Features
