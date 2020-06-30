@@ -4,113 +4,110 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.javamodularity:moduleplugin:1.6.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath 'org.javamodularity:moduleplugin:1.7.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5'
     }
 }
 
-allprojects {
-    apply plugin: 'java-library'
-    apply plugin: 'org.javamodularity.moduleplugin'
-    apply plugin: 'maven-publish'
-    apply plugin: 'com.jfrog.bintray'
+apply plugin: 'java-library'
+apply plugin: 'org.javamodularity.moduleplugin'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
 
-    group 'asia.kala'
-    version '0.1.0-RC2-SHAPSHOT'
+group 'asia.kala'
+version '0.1.0-RC2-SHAPSHOT'
 
-    modularity.mixedJavaRelease 8
+modularity.mixedJavaRelease 8
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+javadoc {
+    source = sourceSets.main.allSource
+
+    options {
+        encoding = 'UTF-8'
+        locale = 'en_US'
+        tags = ['apiNote:a:API Note:', 'implSpec:a:Implementation Requirements:', 'implNote:a:Implementation Note:']
     }
 
-    if (project == rootProject) {
-        javadoc {
-            source = sourceSets.main.allSource
+    options.addStringOption('link', 'https://docs.oracle.com/en/java/javase/11/docs/api/')
+    options.addBooleanOption('html5', true)
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
 
-            options {
-                encoding = 'UTF-8'
-                locale = 'en_US'
-                tags = ['apiNote:a:API Note:', 'implSpec:a:Implementation Requirements:', 'implNote:a:Implementation Note:']
+task javadocJar(type: Jar) {
+    from javadoc
+    archiveClassifier = 'javadoc'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    exclude 'module-info.class'
+    archiveClassifier = 'sources'
+}
+
+publishing {
+    publications {
+        Kala(MavenPublication) {
+            from components.java
+
+            artifact sourcesJar
+
+            if (project == rootProject) {
+                artifact javadocJar
+                //artifact annotationsJar
             }
-
-            options.addStringOption('link', 'https://docs.oracle.com/en/java/javase/11/docs/api/')
-            options.addBooleanOption('html5', true)
-            options.addStringOption('Xdoclint:none', '-quiet')
-        }
-
-        task javadocJar(type: Jar) {
-            from javadoc
-            archiveClassifier = 'javadoc'
-        }
-    }
-
-    task sourcesJar(type: Jar) {
-        from sourceSets.main.allSource
-        exclude 'module-info.class'
-        archiveClassifier = 'sources'
-    }
-
-    publishing {
-        publications {
-            Kala(MavenPublication) {
-                from components.java
-
-                artifact sourcesJar
-
-                if (project == rootProject) {
-                    artifact javadocJar
-                    //artifact annotationsJar
-                }
-                pom {
-                    name = project.name
-                    licenses {
-                        license {
-                            name = 'The Apache License, Version 2.0'
-                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        }
+            pom {
+                name = project.name
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
-                    developers {
-                        developer {
-                            id = 'glavo'
-                            name = 'Glavo'
-                            email = 'zjx001202@gmail.com'
-                        }
+                }
+                developers {
+                    developer {
+                        id = 'glavo'
+                        name = 'Glavo'
+                        email = 'zjx001202@gmail.com'
                     }
                 }
             }
         }
     }
+}
 
-    bintray {
-        user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-        key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-        publications = ['Kala']
-        pkg {
-            repo = 'maven'
-            name = project.name
-            licenses = ['Apache-2.0']
-            publicDownloadNumbers = true
-            vcsUrl = 'https://github.com/kala-projects/kala-ansi.git'
-            version {
-                name = project.version
-                desc = "${project.name} ${project.version}"
-                vcsTag = project.version
-            }
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    publications = ['Kala']
+    pkg {
+        repo = 'maven'
+        name = project.name
+        licenses = ['Apache-2.0']
+        publicDownloadNumbers = true
+        vcsUrl = 'https://github.com/Glavo/kala-ansi.git'
+        version {
+            name = project.version
+            desc = "${project.name} ${project.version}"
+            vcsTag = project.version
         }
     }
-
-    tasks.withType(GenerateModuleMetadata) {
-        enabled = false
-    }
-
-    task travisPublish() {}
-
-    if (!project.version.toString().endsWith("SHAPSHOT")) {
-        travisPublish.dependsOn(bintrayUpload)
-    }
 }
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
+
+task travisPublish() {}
+
+if (!project.version.toString().endsWith("SHAPSHOT")) {
+    travisPublish.dependsOn(bintrayUpload)
+}
+
 
 test {
     testLogging.showStandardStreams = true
