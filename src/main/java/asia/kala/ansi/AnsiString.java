@@ -1366,7 +1366,6 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
         public static Attribute of(List<? extends Attribute> list) {
             final ListIterator<? extends Attribute> it = list.listIterator(list.size());
-            //noinspection Convert2Diamond
             return of(new Iterator<Attribute>() {
                 public final boolean hasNext() {
                     return it.hasPrevious();

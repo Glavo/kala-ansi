@@ -1,5 +1,5 @@
 var hello = AnsiString.valueOf("Hello world Ansi!") // creating an AnsiString
-var coloredHello = AnsiString.valueOf(Terminal.RED + "Hello world Ansi!") //pre-colored strings
+var coloredHello = AnsiString.valueOf("\u001b[31m" + "Hello world Ansi!") //pre-colored strings
 hello.concat(coloredHello) // You can append `AnsiString`s using .concat
 var appended = coloredHello.concat(hello) // appending strings does not leak colors between them
 var substringed = appended.substring(0, 25) // substring them
