@@ -652,6 +652,19 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
     }
 
+    /**
+     * Returns a string whose value is this string, with all leading
+     * and trailing space removed, where space is defined
+     * as any character whose codepoint is less than or equal to
+     * {@code 'U+0020'} (the space character).
+     * <p>
+     * This method may be used to trim space (as defined above) from
+     * the beginning and end of a string.
+     *
+     * @return a string whose value is this string, with all leading and trailing space removed, or this string if it
+     * has no leading or trailing space.
+     * @see String#trim()
+     */
     public final AnsiString trim() {
         final String plain = this.plain;
         int len = plain.length();
