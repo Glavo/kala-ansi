@@ -2,8 +2,6 @@ package kala.ansi;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,12 +19,19 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
     static final Pattern ANSI_PATTERN = Pattern.compile("(\u009b|\u001b\\[)[0-?]*[ -/]*[@-~]");
     static final String RESET = "\u001b[0m";
-    static final AnsiString EMPTY = new AnsiString("", null, 0);
-    static final AnsiString NULL = new AnsiString("null", null, 0);
+    static final AnsiString EMPTY = new AnsiString("");
+    static final AnsiString NULL = new AnsiString("null");
 
     private final String plain;
     private final long[] states;
     private final int statesFrom;
+
+    AnsiString(String plain) {
+        this.plain = plain;
+        this.states = null;
+        this.statesFrom = 0;
+        this.encoded = plain;
+    }
 
     AnsiString(String plain, long[] states, int statesFrom) {
         this.plain = plain;
@@ -34,7 +39,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         this.statesFrom = statesFrom;
 
         if (states == null) {
-            encodedCache = plain;
+            encoded = plain;
         }
     }
 
@@ -283,7 +288,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
 
         if (!hasStates) {
-            return new AnsiString(raw instanceof String ? ((String) raw) : builder.toString(), null, 0);
+            return new AnsiString(raw instanceof String ? ((String) raw) : builder.toString());
         }
 
         String plain = builder.toString();
@@ -297,7 +302,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
 
             if (statesLength == 0) {
-                return new AnsiString(plain, null, 0);
+                return new AnsiString(plain);
             } else {
                 long[] ss = Arrays.copyOfRange(states, statesFrom, statesFrom + statesLength);
                 return new AnsiString(plain, ss, statesFrom);
@@ -318,7 +323,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         if (plain.length() == 0) {
             return EMPTY;
         }
-        return new AnsiString(plain.toString(), null, 0);
+        return new AnsiString(plain.toString());
     }
 
     /**
@@ -381,7 +386,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             for (AnsiString string : strings) {
                 builder.append(string.plain);
             }
-            return new AnsiString(builder.toString(), null, 0);
+            return new AnsiString(builder.toString());
         }
 
         int offset = 0;
@@ -573,7 +578,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         final long[] states = this.states;
 
         if (states == null) {
-            return new AnsiString(plain.substring(beginIndex, endIndex), null, 0);
+            return new AnsiString(plain.substring(beginIndex, endIndex));
         }
 
         final int newLen = endIndex - beginIndex;
@@ -581,7 +586,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         final int statesLen = states.length;
 
         if (newLen == 0 || statesFrom >= endIndex || statesFrom + statesLen <= beginIndex) {
-            return new AnsiString(plain.substring(beginIndex, endIndex), null, 0);
+            return new AnsiString(plain.substring(beginIndex, endIndex));
         }
 
         final int newStateFrom = Math.max(statesFrom - beginIndex, 0);
@@ -635,7 +640,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
         if (states == null) {
             if (otherStates == null) {
-                return new AnsiString(newPlain, null, 0);
+                return new AnsiString(newPlain);
             } else {
                 return new AnsiString(newPlain, otherStates, thisLength + other.statesFrom);
             }
@@ -981,7 +986,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             final int newStatesLength = trimStatesTail(newStates, newStatesFrom);
 
             if (newStatesLength == 0) {
-                return new AnsiString(plain, null, 0);
+                return new AnsiString(plain);
             } else if (newStatesLength == newStates.length) {
                 return new AnsiString(plain, newStates, 0);
             } else {
@@ -1069,21 +1074,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return hashCode = toString().hashCode() + hashMagic;
     }
 
-    private transient Object encodedCache = null;
-
-    private String getCache() {
-        final Object cache = this.encodedCache;
-        if (cache == null) {
-            return null;
-        }
-        if (cache instanceof String) {
-            return ((String) cache);
-        }
-        if (cache instanceof Reference<?>) {
-            return (String) ((Reference<?>) cache).get();
-        }
-        return null;
-    }
+    private transient String encoded = null;
 
     /**
      * Get the encoded string (including ANSI escape sequence represented by {@link #states }).
@@ -1091,19 +1082,16 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * <p>Results are calculated when it is needed. If states is {@code null}, then this method
      * will return plain text directly.
      *
-     * <p>Currently, this method saves {@link WeakReference weak references} to the results.
-     * This method will not repeatedly calculate the value until the string is recovered by gc.
-     *
      * @return the encoded string
      */
     public final String getEncoded() {
-        String res = getCache();
+        String res = encoded;
         if (res != null) {
             return res;
         }
 
         synchronized (this) {
-            res = getCache();
+            res = encoded;
             if (res != null) {
                 return res;
             }
@@ -1111,7 +1099,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             final String plain = this.plain;
             final long[] states = this.states;
             if (states == null) {
-                this.encodedCache = plain;
+                this.encoded = plain;
                 return plain;
             }
 
@@ -1134,7 +1122,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
             Attribute.emitAnsiCodes0(currentState, 0, builder);
             res = builder.toString();
-            this.encodedCache = new WeakReference<>(res);
+            this.encoded = res;
             return res;
         }
     }
