@@ -1,4 +1,4 @@
-package asia.kala.ansi;
+package kala.ansi;
 
 class Category {
     private static Category[] categories;

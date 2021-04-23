@@ -1,4 +1,4 @@
-package asia.kala.ansi;
+package kala.ansi;
 
 import java.util.*;
 

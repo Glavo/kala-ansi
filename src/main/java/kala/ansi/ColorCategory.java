@@ -1,4 +1,4 @@
-package asia.kala.ansi;
+package kala.ansi;
 
 final class ColorCategory extends Category {
     final int colorCode;

@@ -1,4 +1,4 @@
-package asia.kala.ansi;
+package kala.ansi;
 
 import java.io.IOException;
 import java.io.Serializable;

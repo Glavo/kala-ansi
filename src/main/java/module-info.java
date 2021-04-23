@@ -1,3 +1,3 @@
-module asia.kala.ansi {
-    exports asia.kala.ansi;
+module kala.ansi {
+    exports kala.ansi;
 }

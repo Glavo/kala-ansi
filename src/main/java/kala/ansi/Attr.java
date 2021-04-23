@@ -1,4 +1,4 @@
-package asia.kala.ansi;
+package kala.ansi;
 
 abstract class Attr extends AnsiString.Attribute {
     final String escape;
@@ -17,7 +17,7 @@ abstract class Attr extends AnsiString.Attribute {
         if (other instanceof Attrs) {
             return other.concat(this);
         } else {
-            return AnsiString.Attribute.of(this, other);
+            return of(this, other);
         }
     }
 

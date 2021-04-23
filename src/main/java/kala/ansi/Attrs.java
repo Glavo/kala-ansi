@@ -1,4 +1,4 @@
-package asia.kala.ansi;
+package kala.ansi;
 
 import java.util.Arrays;
 
@@ -40,13 +40,13 @@ final class Attrs extends AnsiString.Attribute {
             Attr[] newAttrs = new Attr[attributesLength + osAttributesLength];
             System.arraycopy(attributes, 0, newAttrs, 0, attributesLength);
             System.arraycopy(os.attributes, 0, newAttrs, attributesLength, osAttributesLength);
-            return AnsiString.Attribute.of(newAttrs);
+            return of(newAttrs);
         } else {
             int idx = Arrays.binarySearch(attributes, other);
             if (idx < 0) {
                 Attr[] s = Arrays.copyOfRange(attributes, 0, attributesLength + 1);
                 s[attributesLength] = ((Attr) other);
-                return AnsiString.Attribute.of(s);
+                return of(s);
             } else {
                 return this;
             }
