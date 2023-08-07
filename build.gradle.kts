@@ -4,7 +4,9 @@ plugins {
     `java-library`
     `maven-publish`
     signing
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     id("org.glavo.compile-module-info-plugin") version "2.0"
+    id("org.glavo.load-maven-publish-properties") version "0.1.0"
 }
 
 group = "org.glavo"
@@ -72,6 +74,17 @@ configure<PublishingExtension> {
                 }
 
             }
+        }
+    }
+}
+
+// ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+nexusPublishing {
+    repositories {
+        sonatype {
+            stagingProfileId.set(rootProject.ext["sonatypeStagingProfileId"].toString())
+            username.set(rootProject.ext["sonatypeUsername"].toString())
+            password.set(rootProject.ext["sonatypePassword"].toString())
         }
     }
 }
