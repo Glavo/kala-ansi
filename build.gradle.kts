@@ -4,10 +4,11 @@ plugins {
     `java-library`
     `maven-publish`
     signing
+    id("org.glavo.compile-module-info-plugin") version "2.0"
 }
 
 group = "org.glavo"
-version = kalaVersion("0.2.0")
+version = "0.2.0" + "-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -23,20 +24,9 @@ java {
 }
 
 tasks.compileJava {
-    options.release.set(9)
+    sourceCompatibility = "9"
+    options.release.set(8)
     options.isWarnings = false
-    doLast {
-        val tree = fileTree(destinationDir)
-        tree.include("**/*.class")
-        tree.exclude("module-info.class")
-        tree.forEach {
-            RandomAccessFile(it, "rw").use { rf ->
-                rf.seek(7)   // major version
-                rf.write(49)   // java 5
-                rf.close()
-            }
-        }
-    }
 }
 
 tasks.test {
@@ -85,6 +75,3 @@ configure<PublishingExtension> {
         }
     }
 }
-
-fun kalaVersion(base: String) =
-    if (System.getProperty("kala.release") == "true") base else "$base-SNAPSHOT"
