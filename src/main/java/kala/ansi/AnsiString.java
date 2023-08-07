@@ -1090,41 +1090,34 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             return res;
         }
 
-        synchronized (this) {
-            res = encoded;
-            if (res != null) {
-                return res;
-            }
-
-            final String plain = this.plain;
-            final long[] states = this.states;
-            if (states == null) {
-                this.encoded = plain;
-                return plain;
-            }
-
-            final int length = this.length();
-            final int statesFrom = this.statesFrom;
-            final int statesLimit = statesFrom + states.length;
-
-            long currentState = 0;
-
-            StringBuilder builder = new StringBuilder(length * 2);
-
-            for (int i = 0; i < length; i++) {
-                final long state = (i >= statesFrom && i < statesLimit) ? states[i - statesFrom] : 0;
-                if (state != currentState) {
-                    Attribute.emitAnsiCodes0(currentState, state, builder);
-                    currentState = state;
-                }
-                builder.append(plain.charAt(i));
-            }
-
-            Attribute.emitAnsiCodes0(currentState, 0, builder);
-            res = builder.toString();
-            this.encoded = res;
-            return res;
+        final String plain = this.plain;
+        final long[] states = this.states;
+        if (states == null) {
+            this.encoded = plain;
+            return plain;
         }
+
+        final int length = this.length();
+        final int statesFrom = this.statesFrom;
+        final int statesLimit = statesFrom + states.length;
+
+        long currentState = 0;
+
+        StringBuilder builder = new StringBuilder(length * 2);
+
+        for (int i = 0; i < length; i++) {
+            final long state = (i >= statesFrom && i < statesLimit) ? states[i - statesFrom] : 0;
+            if (state != currentState) {
+                Attribute.emitAnsiCodes0(currentState, state, builder);
+                currentState = state;
+            }
+            builder.append(plain.charAt(i));
+        }
+
+        Attribute.emitAnsiCodes0(currentState, 0, builder);
+        res = builder.toString();
+        this.encoded = res;
+        return res;
     }
 
     /**
