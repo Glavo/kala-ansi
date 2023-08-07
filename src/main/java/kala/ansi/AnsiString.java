@@ -413,11 +413,11 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      *
      * @return the plain text of the {@code AnsiString}
      */
-    public final String getPlain() {
+    public String getPlain() {
         return plain;
     }
 
-    public final long[] getStates() {
+    public long[] getStates() {
         final int length = this.length();
         long[] newStates = new long[length()];
         if (states == null) {
@@ -427,7 +427,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return newStates;
     }
 
-    public final long stateAt(int index) {
+    public long stateAt(int index) {
         if (index < 0 || index >= length()) {
             throw new IndexOutOfBoundsException("Index out of range: " + index);
         }
@@ -445,7 +445,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @return the length of the plain text.
      * @see String#length()
      */
-    public final int length() {
+    public int length() {
         return plain.length();
     }
 
@@ -455,7 +455,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @return {@code true} if {@link #length()} is {@code 0}, otherwise
      * {@code false}
      */
-    public final boolean isEmpty() {
+    public boolean isEmpty() {
         return plain.isEmpty();
     }
 
@@ -470,7 +470,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#charAt(int)
      */
-    public final char charAt(int index) {
+    public char charAt(int index) {
         return plain.charAt(index);
     }
 
@@ -486,7 +486,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#codePointAt(int)
      */
-    public final int codePointAt(int index) {
+    public int codePointAt(int index) {
         return plain.codePointAt(index);
     }
 
@@ -502,7 +502,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#codePointBefore(int)
      */
-    public final int codePointBefore(int index) {
+    public int codePointBefore(int index) {
         return plain.codePointBefore(index);
     }
 
@@ -521,7 +521,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#codePointCount(int, int)
      */
-    public final int codePointCount(int beginIndex, int endIndex) {
+    public int codePointCount(int beginIndex, int endIndex) {
         return plain.codePointCount(beginIndex, endIndex);
     }
 
@@ -543,7 +543,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#offsetByCodePoints(int, int)
      */
-    public final int offsetByCodePoints(int index, int codePointOffset) {
+    public int offsetByCodePoints(int index, int codePointOffset) {
         return plain.offsetByCodePoints(index, codePointOffset);
     }
 
@@ -561,7 +561,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      *                                   {@code beginIndex} is larger than
      *                                   {@code endIndex}.
      */
-    public final AnsiString substring(final int beginIndex, final int endIndex) {
+    public AnsiString substring(final int beginIndex, final int endIndex) {
         final String plain = this.plain;
         final int size = plain.length();
 
@@ -607,7 +607,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @return an {@code AnsiString} that represents the concatenation of this object's
      * characters and states followed by the string argument's characters .
      */
-    public final AnsiString concat(CharSequence string) {
+    public AnsiString concat(CharSequence string) {
         return concat(AnsiString.valueOf(string));
     }
 
@@ -619,7 +619,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @return an {@code AnsiString} that represents the concatenation of this object's
      * characters and states followed by the string argument's characters and states
      */
-    public final AnsiString concat(AnsiString other) {
+    public AnsiString concat(AnsiString other) {
         if (other == null) {
             return concat(NULL);
         }
@@ -670,7 +670,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * has no leading or trailing space.
      * @see String#trim()
      */
-    public final AnsiString trim() {
+    public AnsiString trim() {
         final String plain = this.plain;
         int len = plain.length();
         if (len == 0) {
@@ -696,7 +696,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#isBlank()
      */
-    public final boolean isBlank() {
+    public boolean isBlank() {
         final String plain = this.plain;
         final int length = plain.length();
         if (length == 0) {
@@ -722,7 +722,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#indexOf(int)
      */
-    public final int indexOf(int ch) {
+    public int indexOf(int ch) {
         return plain.indexOf(ch);
     }
 
@@ -738,7 +738,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#indexOf(int, int)
      */
-    public final int indexOf(int ch, int fromIndex) {
+    public int indexOf(int ch, int fromIndex) {
         return plain.indexOf(ch, fromIndex);
     }
 
@@ -751,7 +751,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#lastIndexOf(int)
      */
-    public final int lastIndexOf(int ch) {
+    public int lastIndexOf(int ch) {
         return plain.lastIndexOf(ch);
     }
 
@@ -789,7 +789,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * than or equal to {@code fromIndex}, or {@code -1}
      * if the character does not occur before that point.
      */
-    public final int lastIndexOf(int ch, int fromIndex) {
+    public int lastIndexOf(int ch, int fromIndex) {
         return plain.lastIndexOf(ch, fromIndex);
     }
 
@@ -802,7 +802,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#indexOf(String)
      */
-    public final int indexOf(String str) {
+    public int indexOf(String str) {
         return plain.indexOf(str);
     }
 
@@ -817,7 +817,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#indexOf(String, int)
      */
-    public final int indexOf(String str, int fromIndex) {
+    public int indexOf(String str, int fromIndex) {
         return plain.indexOf(str, fromIndex);
     }
 
@@ -832,7 +832,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * @see #getPlain()
      * @see String#lastIndexOf(String)
      */
-    public final int lastIndexOf(String str) {
+    public int lastIndexOf(String str) {
         return plain.lastIndexOf(str);
     }
 
@@ -846,11 +846,11 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * searching backward from the specified index,
      * or {@code -1} if there is no such occurrence
      */
-    public final int lastIndexOf(String str, int fromIndex) {
+    public int lastIndexOf(String str, int fromIndex) {
         return plain.lastIndexOf(str, fromIndex);
     }
 
-    public final AnsiString overlay(Overlayable overlayable) {
+    public AnsiString overlay(Overlayable overlayable) {
         if (overlayable == null) {
             throw new NullPointerException();
         }
@@ -869,15 +869,15 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         throw new AssertionError();
     }
 
-    public final AnsiString overlay(Attribute attribute) {
+    public AnsiString overlay(Attribute attribute) {
         return overlay(attribute, 0, length());
     }
 
-    public final AnsiString overlay(Attribute attribute, int start) {
+    public AnsiString overlay(Attribute attribute, int start) {
         return overlay(attribute, start, length());
     }
 
-    public final AnsiString overlay(Attribute attribute, int start, int end) {
+    public AnsiString overlay(Attribute attribute, int start, int end) {
         if (attribute == null) {
             throw new NullPointerException();
         }
@@ -924,19 +924,19 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return new AnsiString(plain, newStates, newStatesFrom);
     }
 
-    public final AnsiString overlayAll(Overlayable... oas) {
+    public AnsiString overlayAll(Overlayable... oas) {
         return overlayAll(false, Arrays.asList(oas));
     }
 
-    public final AnsiString overlayAll(boolean trimStates, Overlayable... oas) {
+    public AnsiString overlayAll(boolean trimStates, Overlayable... oas) {
         return overlayAll(trimStates, Arrays.asList(oas));
     }
 
-    public final AnsiString overlayAll(Iterable<? extends Overlayable> oas) {
+    public AnsiString overlayAll(Iterable<? extends Overlayable> oas) {
         return overlayAll(false, oas);
     }
 
-    public final AnsiString overlayAll(boolean trimStates, Iterable<? extends Overlayable> oas) {
+    public AnsiString overlayAll(boolean trimStates, Iterable<? extends Overlayable> oas) {
         Iterator<? extends Overlayable> iterator = oas.iterator();
         if (!iterator.hasNext()) {
             return this;
@@ -1000,21 +1000,21 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
     //region Kotlin operators
 
-    public final AnsiString plus(Object string) {
+    public AnsiString plus(Object string) {
         return concat(AnsiString.valueOf(string));
     }
 
     /**
      * Alias of {@link #concat(CharSequence)}, used to overload the plus operator in kotlin.
      */
-    public final AnsiString plus(CharSequence string) {
+    public AnsiString plus(CharSequence string) {
         return concat(AnsiString.valueOf(string));
     }
 
     /**
      * Alias of {@link #concat(AnsiString)}, used to overload the plus operator in kotlin.
      */
-    public final AnsiString plus(AnsiString other) {
+    public AnsiString plus(AnsiString other) {
         return concat(other);
     }
 
@@ -1022,21 +1022,21 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
 
     //region Scala operators
 
-    public final AnsiString $plus$plus(Object string) {
+    public AnsiString $plus$plus(Object string) {
         return concat(AnsiString.valueOf(string));
     }
 
     /**
      * Alias of {@link #concat(CharSequence)}, used to overload the `++` operator in kotlin.
      */
-    public final AnsiString $plus$plus(CharSequence string) {
+    public AnsiString $plus$plus(CharSequence string) {
         return concat(AnsiString.valueOf(string));
     }
 
     /**
      * Alias of {@link #concat(AnsiString)}, used to overload the `++` operator in scala.
      */
-    public final AnsiString $plus$plus(AnsiString other) {
+    public AnsiString $plus$plus(AnsiString other) {
         return concat(other);
     }
 
@@ -1045,7 +1045,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
     /**
      * {@inheritDoc}
      */
-    public final int compareTo(AnsiString o) {
+    public int compareTo(AnsiString o) {
         return toString().compareTo(o.toString());
     }
 
@@ -1053,7 +1053,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * {@inheritDoc}
      */
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         if (!(o instanceof AnsiString)) {
             return false;
         }
@@ -1066,7 +1066,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      * {@inheritDoc}
      */
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         if (hashCode != 0) {
             return hashCode;
         }
@@ -1084,7 +1084,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
      *
      * @return the encoded string
      */
-    public final String getEncoded() {
+    public String getEncoded() {
         String res = encoded;
         if (res != null) {
             return res;
@@ -1368,15 +1368,15 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         public static Attribute of(List<? extends Attribute> list) {
             final ListIterator<? extends Attribute> it = list.listIterator(list.size());
             return of(new Iterator<Attribute>() {
-                public final boolean hasNext() {
+                public boolean hasNext() {
                     return it.hasPrevious();
                 }
 
-                public final Attribute next() {
+                public Attribute next() {
                     return it.previous();
                 }
 
-                public final void remove() {
+                public void remove() {
                     throw new UnsupportedOperationException("remove");
                 }
             });
@@ -1508,7 +1508,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append(attribute)
                     .append(" with range(from ")
