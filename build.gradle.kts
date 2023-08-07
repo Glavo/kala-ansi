@@ -3,6 +3,7 @@ import java.io.RandomAccessFile
 plugins {
     `java-library`
     `maven-publish`
+    signing
 }
 
 group = "org.glavo"
@@ -68,7 +69,7 @@ configure<PublishingExtension> {
                 licenses {
                     license {
                         name.set("Apache-2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
                 }
 
@@ -79,6 +80,7 @@ configure<PublishingExtension> {
                         email.set("zjx001202@gmail.com")
                     }
                 }
+
             }
         }
     }
