@@ -1,16 +1,15 @@
-import java.io.RandomAccessFile
-
 plugins {
-    `java-library`
-    `maven-publish`
-    signing
+    id("java-library")
+    id("maven-publish")
+    id("signing")
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     id("org.glavo.compile-module-info-plugin") version "2.0"
     id("org.glavo.load-maven-publish-properties") version "0.1.0"
 }
 
 group = "org.glavo"
-version = "0.2.0" + "-SNAPSHOT"
+version = "0.2.0"// + "-SNAPSHOT"
+description = "A lightweight java library make it very easy to use ANSI decorative strings."
 
 repositories {
     mavenCentral()
@@ -58,6 +57,10 @@ configure<PublishingExtension> {
             from(components["java"])
 
             pom {
+                name.set(project.name)
+                description.set(project.description)
+                url.set("https://github.com/Glavo/kala-ansi")
+
                 licenses {
                     license {
                         name.set("Apache-2.0")
@@ -73,8 +76,22 @@ configure<PublishingExtension> {
                     }
                 }
 
+                scm {
+                    url.set("https://github.com/Glavo/kala-ansi")
+                }
             }
         }
+    }
+}
+
+if (rootProject.ext.has("signing.key")) {
+    signing {
+        useInMemoryPgpKeys(
+            rootProject.ext["signing.keyId"].toString(),
+            rootProject.ext["signing.key"].toString(),
+            rootProject.ext["signing.password"].toString(),
+        )
+        sign(publishing.publications["maven"])
     }
 }
 
