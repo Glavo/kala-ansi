@@ -1,3 +1,18 @@
+/*
+ * Copyright 2025 Glavo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package kala.ansi;
 
 import java.util.*;
@@ -6,46 +21,36 @@ import java.util.*;
 final class Trie {
     private static final Trie[] EMPTY_ARRAY = new Trie[0];
 
-    private static Trie parseMap;
+    static final Trie parseMap;
 
-    static Trie parseMap() {
-        if (parseMap != null) {
-            return parseMap;
-        }
-        synchronized (Trie.class) {
-            if (parseMap != null) {
-                return parseMap;
-            }
+    static {
+        String[] ks = new String[554];
+        Object[] vs = new Object[554];
+        int i = 0;
 
-            String[] ks = new String[554];
-            Object[] vs = new Object[554];
-            int i = 0;
-
-            for (Category category : Category.categories()) {
-                for (Attr attr : category.lookupAttrTable) {
-                    if (attr.escape != null) {
-                        ks[i] = attr.escape.substring(2);
-                        vs[i] = attr;
-                        ++i;
-                    }
+        for (Category category : Category.categories()) {
+            for (Attr attr : category.lookupAttrTable) {
+                if (attr.escape != null) {
+                    ks[i] = attr.escape.substring(2);
+                    vs[i] = attr;
+                    ++i;
                 }
             }
-
-            ks[i] = AnsiString.RESET.substring(2);
-            vs[i] = AnsiString.Reset;
-            ks[i + 1] = "38;2;";
-            vs[i + 1] = AnsiString.Color.category;
-            ks[i + 2] = "48;2;";
-            vs[i + 2] = AnsiString.Back.category;
-
-
-            parseMap = new Trie('\u001b', '\u001b',
-                    new Trie[]{
-                            new Trie('[', '[',
-                                    new Trie[]{trie(Arrays.asList(ks), Arrays.asList(vs))}, null)},
-                    null);
-            return parseMap;
         }
+
+        ks[i] = AnsiString.RESET.substring(2);
+        vs[i] = AnsiString.Reset;
+        ks[i + 1] = "38;2;";
+        vs[i + 1] = AnsiString.Color.category;
+        ks[i + 2] = "48;2;";
+        vs[i + 2] = AnsiString.Back.category;
+
+
+        parseMap = new Trie('\u001b', '\u001b',
+                new Trie[]{
+                        new Trie('[', '[',
+                                new Trie[]{trie(Arrays.asList(ks), Arrays.asList(vs))}, null)},
+                null);
     }
 
     private static Trie trie(List<String> keys, List<Object> values) {
@@ -101,14 +106,14 @@ final class Trie {
     final Trie[] arr;
     final Object value;
 
-    Trie(Object terminalValue) {
+    private Trie(Object terminalValue) {
         this.min = 0;
         this.max = 0;
         this.arr = EMPTY_ARRAY;
         this.value = terminalValue;
     }
 
-    Trie(char min, char max, Trie[] arr, Object value) {
+    private Trie(char min, char max, Trie[] arr, Object value) {
         this.min = min;
         this.max = max;
         this.arr = arr;
@@ -136,13 +141,4 @@ final class Trie {
         }
     }
 
-    static final class ValueWithLength {
-        final int length;
-        final Object value;
-
-        ValueWithLength(int length, Object value) {
-            this.length = length;
-            this.value = value;
-        }
-    }
 }

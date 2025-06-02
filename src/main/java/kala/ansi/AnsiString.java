@@ -1,3 +1,18 @@
+/*
+ * Copyright 2025 Glavo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package kala.ansi;
 
 import java.io.IOException;
@@ -15,25 +30,25 @@ import java.util.regex.Pattern;
  */
 public final class AnsiString implements Serializable, Comparable<AnsiString> {
     private static final long serialVersionUID = -2640452895881997219L;
-    private static final int hashMagic = -1064710924;
+    private static final int HASH_MAGIC = -1064710924;
 
-    static final Pattern ANSI_PATTERN = Pattern.compile("(\u009b|\u001b\\[)[0-?]*[ -/]*[@-~]");
+    private static final Pattern ANSI_PATTERN = Pattern.compile("(\u009b|\u001b\\[)[0-?]*[ -/]*[@-~]");
+    private static final AnsiString EMPTY = new AnsiString("");
+    private static final AnsiString NULL = new AnsiString("null");
     static final String RESET = "\u001b[0m";
-    static final AnsiString EMPTY = new AnsiString("");
-    static final AnsiString NULL = new AnsiString("null");
 
     private final String plain;
     private final long[] states;
     private final int statesFrom;
 
-    AnsiString(String plain) {
+    private AnsiString(String plain) {
         this.plain = plain;
         this.states = null;
         this.statesFrom = 0;
         this.encoded = plain;
     }
 
-    AnsiString(String plain, long[] states, int statesFrom) {
+    private AnsiString(String plain, long[] states, int statesFrom) {
         this.plain = plain;
         this.states = states;
         this.statesFrom = statesFrom;
@@ -195,7 +210,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
             if (ch == '\u001b' || ch == '\u009b') {
                 hasStates = true;
                 final int escapeStartSourceIndex = sourceIndex;
-                Trie.ValueWithLength tuple = Trie.parseMap().query(raw, escapeStartSourceIndex);
+                ValueWithLength tuple = Trie.parseMap.query(raw, escapeStartSourceIndex);
                 if (tuple == null) {
                     sourceIndex = errorMode.handle(sourceIndex, raw);
                 } else {
@@ -851,10 +866,7 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
     }
 
     public AnsiString overlay(Overlayable overlayable) {
-        if (overlayable == null) {
-            throw new NullPointerException();
-        }
-
+        Objects.requireNonNull(overlayable);
         if (overlayable instanceof Attribute) {
             return overlay(((Attribute) overlayable));
         }
@@ -1060,18 +1072,12 @@ public final class AnsiString implements Serializable, Comparable<AnsiString> {
         return toString().equals(o.toString());
     }
 
-    private transient int hashCode;
-
     /**
      * {@inheritDoc}
      */
     @Override
     public int hashCode() {
-        if (hashCode != 0) {
-            return hashCode;
-        }
-
-        return hashCode = toString().hashCode() + hashMagic;
+        return toString().hashCode() + HASH_MAGIC;
     }
 
     private transient String encoded = null;
