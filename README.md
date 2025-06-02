@@ -1,7 +1,4 @@
-## Kala Ansi 
-
-[![Build Status](https://travis-ci.com/Glavo/kala-ansi.svg?branch=master)](https://travis-ci.com/kala-projects/kala-ansi)
-[ ![Download](https://api.bintray.com/packages/glavo/maven/kala-ansi/images/download.svg) ](https://bintray.com/glavo/maven/kala-ansi/_latestVersion)
+## Kala Ansi
 
 Kala Ansi is a lightweight java library make it very easy to use ANSI decorative strings.
 
@@ -13,39 +10,18 @@ use it is as easy as use `java.lang.String`.
 
 ## Adding Kala Ansi to your build
 
-First, you need to add the jcenter repository to your build:
-
-Maven: 
-```xml
-<repositories>
-  <repository>
-    <id>jcenter</id>
-    <url>https://jcenter.bintray.com</url>
-  </repository>
-</repositories>
-```
-
-Gradle:
-```groovy
-repositories {
-    jcenter()
-}
-```
-
-Then add dependencies:
-
 Maven:
 ```xml
 <dependency>
-  <groupId>asia.kala</groupId>
+  <groupId>org.glavo.kala</groupId>
   <artifactId>kala-ansi</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
 Gradle:
 ```groovy
-implementation group: 'asia.kala', name: 'kala-ansi', version: '0.1.0'
+implementation group: 'org.glavo.kala', name: 'kala-ansi', version: '0.2.0'
 ```
 
 ## Features
@@ -56,8 +32,6 @@ Kala Ansi has its own characteristics:
 
 * Kala Ansi is implemented in pure Java,uIt is very lightweight (just 33 kb) and has no dependencies
   
-* Compatible with Java 5+
-
 * Provide `module-info.class`, can be easily packaged by the `jlink` tool
 
 * Lower memory footprint than fansi (TODO: need benchmarks):
