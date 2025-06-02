@@ -7,7 +7,7 @@ plugins {
     id("org.glavo.load-maven-publish-properties") version "0.1.0"
 }
 
-group = "org.glavo"
+group = "org.glavo.kala"
 version = "0.2.0"// + "-SNAPSHOT"
 description = "A lightweight java library make it very easy to use ANSI decorative strings."
 
